@@ -7,7 +7,6 @@ from django.contrib import messages
 from .forms import ResumeUploadForm
 from .models import UserProfile, Challenge
 from .utils import extract_resume_text, generate_challenges_from_feedback, analyze_resume
-from django.views.decorators.csrf import csrf_exempt
 
 def register(request):
     if request.method == 'POST':
@@ -89,5 +88,5 @@ def challenge_detail(request, pk):
     return render(request, 'core/challenge_detail.html', {
         'challenge': challenge,
         'mcqs': challenge.mcq_questions,
-        'theories': challenge.theory_questions
+       
     })

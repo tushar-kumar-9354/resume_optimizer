@@ -28,30 +28,53 @@ def extract_experience(text):
     experience = re.findall(r'(?i)(?:Experience\s*[:\-]?\s*)(.*)', text)
     experience += re.findall(r'(?i)(?:Worked at\s*)(.*)', text)
     return experience
-
 def ask_gemini_for_challenge(skill, reason):
     prompt = f"""
-    The user listed "{skill}" in their resume but has not demonstrated it in projects or work experience.
+The user listed "{skill}" in their resume but has not demonstrated it in projects or work experience.
 
-    Generate a JSON response ONLY, without explanations.
+Generate a JSON response ONLY, without explanations.
 
-    Required format:
+Each question should be a fill-in-the-blank type asking the user to complete a line of code or choose the correct syntax.
+
+Required format:
+{{
+  "mcqs": [
     {{
-    "theory": "Short theoretical question about {skill}",
-    "mcq": {{
-        "question": "MCQ question about {skill}",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
-        "answer": "Correct option text"
+      "question": "Complete the syntax: print(___)",
+      "options": ["'Hello World'", "print", "()", "'()'"],
+      "answer": "'Hello World'"
+    }},
+    {{
+      "question": "Fill in the blank: for i ___ range(5):",
+      "options": ["on", "in", "of", "into"],
+      "answer": "in"
+    }},
+    {{
+      "question": "Select correct syntax: def ___():",
+      "options": ["main", "func", "__init__", "function"],
+      "answer": "main"
+    }},
+    {{
+      "question": "Fill in: if a ___ b:",
+      "options": ["=", "==", "!=", "<>"],
+      "answer": "=="
+    }},
+    {{
+      "question": "Complete line: import ___",
+      "options": ["python", "os", "from", "sys.path"],
+      "answer": "os"
     }}
-    }}
-    """
-
+  ]
+}}
+"""
     response = model.generate_content(prompt)
     try:
         return response.candidates[0].content.parts[0].text
     except Exception as e:
         print("Gemini output error:", e)
         return None
+
+
 
 def clean_gemini_json(gemini_output):
     """
@@ -80,15 +103,12 @@ def analyze_resume(resume_text):
                 try:
                     cleaned_output = clean_gemini_json(gemini_output)
                     structured = json.loads(cleaned_output)
+                    
+                    # Fix: Properly handle the mcqs array from Gemini
                     feedback.append({
                         "skill": skill,
                         "reason": reason,
-                        "theory": structured.get("theory", ""),
-                        "mcq": {
-                            "question": structured.get("mcq", {}).get("question", ""),
-                            "options": structured.get("mcq", {}).get("options", []),
-                            "answer": structured.get("mcq", {}).get("answer", "")
-                        }
+                        "mcqs": structured.get("mcqs", [])  # Get all MCQs from the response
                     })
                 except json.JSONDecodeError:
                     print(f"⚠️ Invalid JSON for skill {skill}:\n{gemini_output}")
@@ -96,8 +116,6 @@ def analyze_resume(resume_text):
                     print(f"❌ Failed to parse Gemini output for {skill}:", e)
 
     return feedback
-
-# core/utils.py (updated generate_challenges_from_feedback function)
 def generate_challenges_from_feedback(user, feedback_list):
     created_count = 0
     for feedback in feedback_list:
@@ -110,18 +128,13 @@ def generate_challenges_from_feedback(user, feedback_list):
         if Challenge.objects.filter(user=user, skill=skill_obj, description=description).exists():
             continue
 
-        # Create with proper data structure
+        # Create with all MCQ questions from the feedback
         Challenge.objects.create(
             user=user,
             skill=skill_obj,
             reason=reason,
             description=description,
-            theory_questions=[feedback.get("theory", "")],
-            mcq_questions=[{
-                "question": feedback["mcq"]["question"],
-                "options": feedback["mcq"]["options"],
-                "answer": feedback["mcq"]["answer"]
-            }],
+            mcq_questions=feedback.get("mcqs", []),  # Use all MCQs from the response
             status="PENDING"
         )
         created_count += 1

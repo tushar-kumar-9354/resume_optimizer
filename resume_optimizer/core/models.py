@@ -18,16 +18,14 @@ class Challenge(models.Model):
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
     description = models.TextField()
     reason = models.TextField(blank=True, null=True)
-    theory_questions = models.JSONField(default=list)
     mcq_questions = models.JSONField(default=list)  # Contains all MCQ data including answers
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="PENDING")
 
     def __str__(self):
         return f"{self.skill.name} - {self.user.username}"
-
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    resume = models.FileField(upload_to='resumes/')
+    resume = models.FileField(upload_to='resumes/', unique=False)  # Allows duplicates
     skills = models.ManyToManyField(Skill)
     
     def __str__(self):
