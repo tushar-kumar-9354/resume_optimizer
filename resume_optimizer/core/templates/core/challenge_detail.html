@@ -1,0 +1,41 @@
+<!-- core/challenge_detail.html -->
+<form method="POST">
+  {% csrf_token %}
+
+  <!-- THEORY QUESTIONS -->
+  <div>
+    <h3>📘 Theory Questions:</h3>
+    {% for theory_q in theories %}
+      <p><strong>Q{{ forloop.counter }}:</strong> {{ theory_q }}</p>
+      <textarea name="theory_answer_{{ forloop.counter }}" rows="4" cols="60" required></textarea>
+    {% empty %}
+      <p>No theory questions available for this challenge.</p>
+    {% endfor %}
+  </div>
+
+  <!-- MCQ QUESTIONS -->
+  <div style="margin-top: 20px;">
+    <h3>❓ MCQ Questions:</h3>
+    {% for mcq in mcqs %}
+      <p><strong>Q{{ forloop.counter }}:</strong> {{ mcq.question }}</p>
+      {% for opt in mcq.options %}
+        <label style="display: block; margin-left: 20px;">
+          <input type="radio" name="mcq_{{ forloop.parentloop.counter0 }}" value="{{ opt }}" required> {{ opt }}
+        </label>
+      {% endfor %}
+    {% empty %}
+      <p>No MCQs available for this challenge.</p>
+    {% endfor %}
+  </div>
+
+  <!-- OPTIONAL COMMENT BOX -->
+  <div style="margin-top: 20px;">
+    <label>📝 Additional Feedback:</label><br>
+    <textarea name="feedback" rows="3" cols="60"></textarea>
+  </div>
+
+  <!-- SUBMIT BUTTON -->
+  <div style="margin-top: 20px;">
+    <button type="submit">Submit Test</button>
+  </div>
+</form>
