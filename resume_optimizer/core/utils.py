@@ -260,27 +260,36 @@ Return JSON like:
     except Exception as e:
         print("Plan generation failed:", e)
         return []
-def generate_code_for_step(project_title, task_description, skills):
-    print("🔧 Calling Gemini for:", project_title, task_description)
+def generate_code_for_step(project_title, task_description, skills, previous_steps=None):
+    previous_steps = previous_steps or []
+    history_context = "\n".join(f"- {step}" for step in previous_steps if step != task_description)
+
     prompt = f"""
-    You are a senior software engineer helping a student implement this software project.
+You are an expert full‑stack mentor.
 
-    Project Title: {project_title}
-    Skills: {', '.join(skills)}
+Project: {project_title}
+Skills: {', '.join(skills)}
+Completed Steps: {history_context}
 
-    Now implement the following development step as part of the project:
-    "{task_description}"
+🔧 TASK:
+Implement this step: "{task_description}"
 
-    Your response must include:
-    - A brief 2–3 line explanation of what you're doing
-    - The relevant Python/Django/React code
+INSTRUCTIONS:
+• Specify **each file** affected (e.g., models.py, views.py, urls.py, serializers.py).
+• Clearly indicate **where to put** the code (top of file, under imports, within a class/method).
+• Provide **only working code blocks**, **no pseudocode**. Use fenced code blocks (```python, ```js).
+• Begin each section with file reference:
+    💾 **Write this in `models.py`**:
+    ```python
+    ...
+    ```
+• Keep blocks modular and beginner‑friendly.
 
-    Return it as plain text with NO markdown formatting (no ```python or backticks).
-    """
+Now generate the code.
+"""
+
     try:
         response = model.generate_content(prompt)
-        print("📩 Gemini raw response:", response.text.strip())
         return response.text.strip()
     except Exception as e:
-        print("❌ Code generation failed:", e)
-        return "Gemini failed to generate code for this step."
+        return f"⚠️ Code generation error: {e}"

@@ -30,3 +30,19 @@ class UserProfile(models.Model):
     
     def __str__(self):
         return self.user.username
+from django.db import models
+from django.contrib.auth.models import User
+
+class ProjectStep(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    project_title = models.CharField(max_length=255)
+    week = models.IntegerField()
+    step_description = models.TextField()
+    code_output = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "project_title", "week")  # Prevent duplicates
+
+    def __str__(self):
+        return f"{self.project_title} - Week {self.week}"

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🗂 Project Timeline</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      padding: 40px;
+      background: #f4f6f8;
+      color: #333;
+    }
+    h1 {
+      font-size: 32px;
+      text-align: center;
+      margin-bottom: 40px;
+      color: #222;
+    }
+    .step-card {
+      background: #ffffff;
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+    .step-card h3 {
+      margin-top: 0;
+      font-size: 22px;
+      color: #007bff;
+    }
+    .step-card p {
+      font-size: 16px;
+      margin: 12px 0;
+    }
+    .task {
+      background: #eef6ff;
+      padding: 12px;
+      border-left: 5px solid #007bff;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    pre {
+      background-color: #1e1e1e;
+      color: #f8f8f2;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Fira Code', monospace;
+      font-size: 14px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+    .empty-state {
+      text-align: center;
+      font-size: 18px;
+      margin-top: 50px;
+      color: #888;
+    }
+    .back-btn {
+      display: inline-block;
+      background: #007bff;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      margin-top: 20px;
+      transition: background 0.3s;
+    }
+    .back-btn:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🗂 Project Timeline</h1>
+
+  {% for step in steps %}
+    <div class="step-card">
+      <h3>Week {{ step.week }} – {{ step.project_title }}</h3>
+      <div class="task"><strong>📝 Task:</strong> {{ step.step_description }}</div>
+      <h4>💻 Code Output</h4>
+      <pre>{{ step.code_output }}</pre>
+    </div>
+  {% empty %}
+    <div class="empty-state">
+      <p>🚫 No project steps saved yet.</p>
+      <a href="{% url 'resume' %}" class="back-btn">⬅ Back to Projects</a>
+    </div>
+  {% endfor %}
+
+</body>
+</html>

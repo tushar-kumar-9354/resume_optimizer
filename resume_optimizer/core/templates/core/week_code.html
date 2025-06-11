@@ -2,22 +2,139 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Week Code – {{ step_description|truncatechars:40 }}</title>
+  <title>Gemini Code Output – {{ step_description|truncatechars:40 }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; padding: 30px; background-color: #f4f4f4; }
-    .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
-    h1, h2 { color: #333; }
-    pre { background: #f0f0f0; padding: 15px; border-radius: 5px; white-space: pre-wrap; }
-    .button { background-color: #007bff; color: white; padding: 10px 16px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f4f6f8;
+      padding: 40px;
+      color: #333;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+    h1, h2, h3 {
+      color: #222;
+      margin-bottom: 10px;
+    }
+    .section {
+      margin-bottom: 30px;
+    }
+    .highlight {
+      background-color: #f9f9f9;
+      padding: 16px;
+      border-left: 5px solid #007bff;
+      border-radius: 6px;
+      font-size: 16px;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+    pre {
+      background-color: #1e1e1e;
+      color: #f8f8f2;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Fira Code', monospace;
+      font-size: 14px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+    .back-btn, .button {
+      display: inline-block;
+      background: #007bff;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      margin-top: 20px;
+      border: none;
+      cursor: pointer;
+    }
+    .back-btn:hover, .button:hover {
+      background: #0056b3;
+    }
+    textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
+
+    /* Floating AI Assistant Button */
+    .ai-fab {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 26px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      z-index: 1000;
+      transition: transform 0.3s;
+    }
+    .ai-fab:hover {
+      transform: scale(1.1);
+      background: #0056b3;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🧠 Code for: <em>{{ step_description }}</em></h1>
-    <h3><strong>Project:</strong> {{ project_title }}</h3>
-    <hr>
-    <pre>{{ code_output }}</pre>
-    <a href="{% url 'resume' %}" class="button">⬅ Back to Projects</a>
+    <p><strong>📌 Project:</strong> {{ project_title }}</p>
+
+    {% if code_explanation %}
+    <div class="section">
+      <h2>💡 Explanation</h2>
+      <div class="highlight">{{ code_explanation }}</div>
+    </div>
+    {% endif %}
+
+    {% if code_output %}
+    <div class="section">
+      <h2>💻 Code Output</h2>
+      <pre>{{ code_output }}</pre>
+    </div>
+    {% endif %}
+
+    <!-- 🤖 Gemini AI Assistant Form -->
+    <div id="ai-assistant" class="section">
+      <h2>🤖 Ask Gemini AI Assistant</h2>
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="ask_gemini">
+        <input type="hidden" name="step_description" value="{{ step_description }}">
+        <input type="hidden" name="project_title" value="{{ project_title }}">
+        <textarea name="user_query" rows="4" placeholder="E.g., What pip installs do I need for utils.py only? Or explain this file’s logic." required></textarea>
+        <button type="submit" class="button">💬 Ask Gemini</button>
+      </form>
+    </div>
+
+    {% if ai_response %}
+      <div class="section">
+        <h2>📩 Gemini’s Answer</h2>
+        <div class="highlight">{{ ai_response }}</div>
+      </div>
+    {% endif %}
+
+    <a href="{% url 'resume' %}" class="back-btn">⬅ Back to Projects</a>
   </div>
+
+  <!-- Floating Gemini Button -->
+  <button class="ai-fab" title="Ask Gemini" onclick="document.getElementById('ai-assistant').scrollIntoView({ behavior: 'smooth' });">🤖</button>
 </body>
 </html>

@@ -162,31 +162,105 @@ def generate_project_ideas_view(request):
         "plan": plan,
         "code_output": code_output,
     })
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from core.models import ProjectStep
+from core.utils import generate_code_for_step
+import google.generativeai as genai
+
+model = genai.GenerativeModel("models/gemini-1.5-flash")
 
 @csrf_exempt
+@login_required
 def week_code_view(request):
+    """
+    Handles displaying the code for each project step and allows
+    asking Gemini specific follow-up questions based on the generated code.
+    """
     code_output = ""
+    code_explanation = ""
+    ai_response = ""
     project_title = ""
     step_description = ""
-    previous_steps = []
+    previous_steps = request.session.get("previous_steps", [])
 
     if request.method == "POST":
-        step_description = request.POST.get("step_description", "")
         project_title = request.POST.get("project_title", "")
-        skills = request.session.get("skills", [])
-        plan = request.session.get("plan", [])
-        previous_steps = request.session.get("previous_steps", [])
+        step_description = request.POST.get("step_description", "")
 
-        # Append current step to history (if not already present)
-        if step_description not in previous_steps:
-            previous_steps.append(step_description)
-            request.session["previous_steps"] = previous_steps
+        # ➤ Generate code for this step
+        if request.POST.get("action") == "code":
+            skills = request.session.get("skills", [])
+            plan = request.session.get("plan", [])
+            
+            if step_description not in previous_steps:
+                previous_steps.append(step_description)
+                request.session["previous_steps"] = previous_steps
 
-        code_output = generate_code_for_step(project_title, step_description, skills, previous_steps)
+            full_response = generate_code_for_step(project_title, step_description, skills, previous_steps)
+
+            if "```" in full_response:
+                parts = full_response.split("```", 1)
+                code_explanation = parts[0].strip()
+                code_output = parts[1].strip()
+            else:
+                lines = full_response.splitlines()
+                code_explanation = "\n".join(lines[:5])
+                code_output = "\n".join(lines[5:])
+
+            week_number = next((s["week"] for s in request.session.get("plan", [])
+                                if s["task"] == step_description), 0)
+
+            ProjectStep.objects.update_or_create(
+                user=request.user,
+                project_title=project_title,
+                week=week_number,
+                defaults={
+                    "step_description": step_description,
+                    "code_output": full_response,
+                }
+            )
+
+        # ➤ AI Assistant follow-up prompt
+        elif request.POST.get("action") == "ask_gemini":
+            user_query = request.POST.get("user_query", "")
+            full_response = request.session.get("code_output", "")
+            prompt = f"""
+You are a senior full-stack mentor with deep Django & React expertise.
+Project: {project_title}
+Task (Week Step): {step_description}
+
+Here is the full code generated for this step:
+{full_response}
+
+User's Question:
+{user_query}
+
+INSTRUCTIONS:
+• If the question refers to a specific file (e.g., utils.py), answer only about that file.
+• Provide file-specific guidance (e.g., pip installs, code placement).
+• Format response in bullet points or file-based sections.
+• Answer clearly and professionally, step-by-step.
+"""
+            try:
+                resp = model.generate_content(prompt)
+                ai_response = resp.text.strip()
+            except Exception:
+                ai_response = "⚠️ Gemini failed to respond – please try again."
 
     return render(request, "core/week_code.html", {
         "project_title": project_title,
         "step_description": step_description,
-        "code_output": code_output
+        "code_explanation": code_explanation,
+        "code_output": code_output,
+        "ai_response": ai_response,
     })
+
+from .models import ProjectStep
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+@login_required
+def project_timeline_view(request):
+    steps = ProjectStep.objects.filter(user=request.user).order_by('week')
+    return render(request, "core/timeline.html", {"steps": steps})
