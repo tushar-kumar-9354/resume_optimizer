@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Resume Optimizer</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; background-color: #f4f4f4; }
+    h1, h2 { color: #333; }
+    .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+    .project-card { background: #f9f9f9; padding: 15px; margin-bottom: 20px; border-radius: 5px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    .button { background-color: #007bff; color: white; padding: 10px 16px; border: none; border-radius: 5px; cursor: pointer; }
+    .button:hover { background-color: #0056b3; }
+    pre { background: #f0f0f0; padding: 15px; border-radius: 5px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Resume Skill & Project Generator</h1>
+
+    <!-- Upload Form -->
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <label><strong>Upload your resume (PDF):</strong></label><br><br>
+      <input type="file" name="resume" accept=".pdf" required><br><br>
+      <button type="submit" class="button">Upload & Generate Projects</button>
+    </form>
+
+    {% if skills %}
+      <hr>
+      <h2>🧠 Extracted Skills</h2>
+      <ul>
+        {% for skill in skills %}
+          <li>{{ skill }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if projects %}
+      <hr>
+      <h2>💡 Suggested Projects Based on Your Skills</h2>
+      {% for project in projects %}
+        <div class="project-card">
+          <h3>{{ project.title }}</h3>
+          <p>{{ project.description }}</p>
+          <p><strong>Technologies:</strong> {{ project.technologies }}</p>
+
+          <!-- Button to Get Execution Plan -->
+          <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="plan">
+            <input type="hidden" name="project_title" value="{{ project.title }}">
+            <input type="hidden" name="project_description" value="{{ project.description }}">
+            <input type="hidden" name="skills" value="{{ skills|join:', ' }}">
+            <button type="submit" class="button">🛠 Show Step-by-Step Plan</button>
+          </form>
+        </div>
+      {% endfor %}
+
+      <!-- Button to Regenerate Ideas -->
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="regenerate" value="1">
+        <button type="submit" class="button">🔁 Regenerate Project Ideas</button>
+      </form>
+    {% endif %}
+
+    {% if plan %}
+      <hr>
+      <h2>🧩 Step-by-Step Execution Plan for <em>{{ request.session.current_project_title }}</em></h2>
+      <ul>
+        {% for step in plan %}
+          <li>
+            <strong>Week {{ step.week }}:</strong> {{ step.task }}
+            <form action="{% url 'week_code' %}" method="POST" style="margin-top: 10px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="code">
+            <input type="hidden" name="step_description" value="{{ step.task }}">
+            <input type="hidden" name="project_title" value="{{ request.session.current_project_title }}">
+            <button class="button" type="submit">💻 Show Code for This Step</button>
+            </form>
+
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if code_output %}
+    <hr>
+    <h2>📜 Gemini Code Suggestion</h2>
+    <pre>{{ code_output }}</pre>
+    {% elif request.POST.action == 'code' %}
+    <p style="color: red;">⚠️ Gemini did not return any code. Try another step or rewrite the task.</p>
+    {% endif %}
+
+  </div>
+</body>
+</html>

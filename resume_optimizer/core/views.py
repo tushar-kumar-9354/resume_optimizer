@@ -42,6 +42,7 @@ def upload_resume(request):
                 resume_text = extract_resume_text(uploaded_file)
             except Exception as e:
                 messages.error(request, f"Error reading resume PDF: {str(e)}")
+                print("Error reading resume PDF:", e)
                 return redirect('upload_resume')
 
             feedback = analyze_resume(resume_text)
@@ -89,4 +90,103 @@ def challenge_detail(request, pk):
         'challenge': challenge,
         'mcqs': challenge.mcq_questions,
        
+    })
+    import json
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+from .utils import (
+    extract_resume_text,
+    extract_skills,
+    generate_projects_based_on_skills,
+    generate_project_plan,
+    generate_code_for_step
+)
+
+@csrf_exempt
+def generate_project_ideas_view(request):
+    skills, projects, plan, code_output = [], [], [], None
+
+    if request.method == "POST":
+        # === Resume Upload ===
+        if request.FILES.get("resume"):
+            resume_file = request.FILES["resume"]
+            resume_text = extract_resume_text(resume_file)
+            skills = extract_skills(resume_text)
+            projects = generate_projects_based_on_skills(skills)
+
+            request.session["skills"] = skills
+            request.session["projects"] = projects
+            request.session["plan"] = []
+
+        # === Regenerate Projects ===
+        elif request.POST.get("regenerate") == "1":
+            skills = request.session.get("skills", [])
+            projects = generate_projects_based_on_skills(skills)
+            request.session["projects"] = projects
+
+        # === Generate Plan for a Project ===
+        elif request.POST.get("action") == "plan":
+            project_title = request.POST.get("project_title")
+            project_description = request.POST.get("project_description")
+            skills = request.POST.get("skills").split(", ")
+            plan = generate_project_plan(project_title, project_description, skills)
+
+            request.session["plan"] = plan
+            request.session["previous_steps"] = []
+            request.session["current_project_title"] = project_title
+            request.session["current_project_description"] = project_description
+
+            projects = request.session.get("projects", [])
+            skills = request.session.get("skills", [])
+
+        # === Generate Code for a Specific Step ===
+        elif request.POST.get("action") == "code":
+            
+            step_description = request.POST.get("step_description")
+            skills = request.session.get("skills", [])
+            plan = request.session.get("plan", [])
+            projects = request.session.get("projects", [])
+            project_title = request.POST.get("project_title", request.session.get("current_project_title", ""))
+
+            code_output = generate_code_for_step(project_title, step_description, skills)
+
+    else:
+        skills = request.session.get("skills", [])
+        projects = request.session.get("projects", [])
+        plan = request.session.get("plan", [])
+        
+
+    return render(request, "core/resume.html", {
+        "skills": skills,
+        "projects": projects,
+        "plan": plan,
+        "code_output": code_output,
+    })
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def week_code_view(request):
+    code_output = ""
+    project_title = ""
+    step_description = ""
+    previous_steps = []
+
+    if request.method == "POST":
+        step_description = request.POST.get("step_description", "")
+        project_title = request.POST.get("project_title", "")
+        skills = request.session.get("skills", [])
+        plan = request.session.get("plan", [])
+        previous_steps = request.session.get("previous_steps", [])
+
+        # Append current step to history (if not already present)
+        if step_description not in previous_steps:
+            previous_steps.append(step_description)
+            request.session["previous_steps"] = previous_steps
+
+        code_output = generate_code_for_step(project_title, step_description, skills, previous_steps)
+
+    return render(request, "core/week_code.html", {
+        "project_title": project_title,
+        "step_description": step_description,
+        "code_output": code_output
     })

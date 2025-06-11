@@ -1,0 +1,10 @@
+<!-- result.html -->
+{% if missing_skills %}
+  <h3>🚨 Missing Skills Detected:</h3>
+  <ul>
+    {% for skill in missing_skills %}
+      <li>{{ skill }}</li>
+    {% endfor %}
+  </ul>
+  <p>Consider learning or showcasing these skills in your next project or certification.</p>
+{% endif %}

@@ -1,29 +1,93 @@
-<!-- core/challenge_detail.html -->
-<form method="POST">
-  {% csrf_token %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ challenge.skill }} Challenge | MCQ Test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: url('https://sdmntprcentralus.oaiusercontent.com/files/00000000-b9e0-61f5-8ddc-5cebc9bc912c/raw?se=2025-06-05T11%3A08%3A31Z&sp=r&sv=2024-08-04&sr=b&scid=f5e18300-50de-52b0-8e53-41f69c47e111&skoid=9ccea605-1409-4478-82eb-9c83b25dc1b0&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-06-05T10%3A02%3A32Z&ske=2025-06-06T10%3A02%3A32Z&sks=b&skv=2024-08-04&sig=I%2BMDWxrDWUrcmD1PNxlmkZ8BtXgXbsyaGNEfHsydl/M%3D') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Inter', sans-serif;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      overflow-x: hidden;
+    }
 
-  <!-- FILL-IN-THE-BLANK MCQ QUESTIONS -->
-  <div>
-    <h3>🧠 Fill in the Blank MCQs for <u>{{ challenge.skill }}</u>:</h3>
-    {% for mcq in mcqs %}
-      <div style="margin-bottom: 20px;">
-        <p><strong>Q{{ forloop.counter }}:</strong> {{ mcq.question }}</p>
-        {% for opt in mcq.options %}
-          <label style="display: block; margin-left: 20px;">
-            <input type="radio" name="mcq_{{ forloop.parentloop.counter0 }}" value="{{ opt }}" required>
-            {{ opt }}
-          </label>
-        {% endfor %}
-      </div>
-      <hr>
-    {% empty %}
-      <p>No MCQs available for this challenge.</p>
-    {% endfor %}
-  </div>
+    .card {
+      background: rgba(0, 0, 0, 0.6); /* Slight transparency */
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
+      max-width: 700px;
+      width: 100%;
+    }
 
+    .question {
+      margin-top: 1rem;
+    }
 
-  <!-- SUBMIT BUTTON -->
-  <div style="margin-top: 20px;">
-    <button type="submit">✅ Submit Test</button>
-  </div>
-</form>
+    .option {
+      margin-bottom: 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: block;
+    }
+
+    .option:hover {
+      background: rgba(45, 212, 191, 0.1);
+      border-color: #2dd4bf;
+    }
+
+    .submit-btn {
+      background: linear-gradient(to right, #2dd4bf, #3b82f6);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      width: 100%;
+      font-weight: 600;
+      transition: 0.3s ease;
+      margin-top: 1.5rem;
+    }
+
+    .submit-btn:hover {
+      background: linear-gradient(to right, #26a69a, #2563eb);
+    }
+  </style>
+</head>
+<body>
+  <form method="POST" class="card">
+    {% csrf_token %}
+    <div class="text-center mb-6">
+      <h1 class="text-3xl font-bold text-white">Skill Challenge Assessment</h1>
+      <div class="mt-2 text-teal-300 text-lg font-semibold">{{ challenge.skill }}</div>
+    </div>
+
+    {% if mcqs %}
+      {% for mcq in mcqs %}
+        <div class="question mb-6">
+          <p class="text-lg font-medium text-white mb-2">Q{{ forloop.counter }}. {{ mcq.question }}</p>
+          {% for opt in mcq.options %}
+            <label class="option">
+              <input type="radio" name="mcq_{{ forloop.parentloop.counter0 }}" value="{{ opt }}" required>
+              {{ opt }}
+            </label>
+          {% endfor %}
+        </div>
+      {% endfor %}
+      <button type="submit" class="submit-btn text-white">Submit Assessment</button>
+    {% else %}
+      <p class="text-center text-white">No MCQs are currently available.</p>
+    {% endif %}
+  </form>
+</body>
+</html>

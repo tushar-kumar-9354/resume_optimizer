@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Week Code – {{ step_description|truncatechars:40 }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; background-color: #f4f4f4; }
+    .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+    h1, h2 { color: #333; }
+    pre { background: #f0f0f0; padding: 15px; border-radius: 5px; white-space: pre-wrap; }
+    .button { background-color: #007bff; color: white; padding: 10px 16px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧠 Code for: <em>{{ step_description }}</em></h1>
+    <h3><strong>Project:</strong> {{ project_title }}</h3>
+    <hr>
+    <pre>{{ code_output }}</pre>
+    <a href="{% url 'resume' %}" class="button">⬅ Back to Projects</a>
+  </div>
+</body>
+</html>

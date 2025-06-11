@@ -1,14 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Upload Resume</title>
-</head>
-<body>
-    <h2>Upload Your Resume</h2>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Upload Resume</button>
-    </form>
-</body>
-</html>
+<!-- resume_upload.html -->
+<form method="POST" enctype="multipart/form-data">
+  {% csrf_token %}
+  <label>Upload Resume (PDF):</label>
+  <input type="file" name="resume"><br><br>
+
+  <label>Paste Job Description (optional):</label><br>
+  <textarea name="jd" rows="8" cols="60"></textarea><br><br>
+
+  <label>Or select a target job role:</label>
+  <select name="target_role">
+    <option value="">-- None --</option>
+    <option value="Data Analyst">Data Analyst</option>
+    <option value="Software Developer">Software Developer</option>
+    <option value="Business Analyst">Business Analyst</option>
+  </select><br><br>
+
+  <button type="submit">Analyze</button>
+</form>

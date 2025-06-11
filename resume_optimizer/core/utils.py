@@ -7,19 +7,35 @@ from django.conf import settings
 import json
 
 # Configure Gemini API
-genai.configure(api_key="AIzaSyDUKAYNttTpvyilioaF9BfbPDEmw6g2ljQ")
-model = genai.GenerativeModel("models/gemini-1.5-flash-latest")
+genai.configure(api_key="AIzaSyDlgaheySCnhuZlUF8uUUr7pKihdmcdWKM")
+model = genai.GenerativeModel("models/gemini-2.0-flash")
 
 def extract_resume_text(file):
     doc = fitz.open(stream=file.read(), filetype="pdf")
     return "\n".join(page.get_text() for page in doc)
 
+import ast
+
 def extract_skills(text):
-    known_skills = [
-        'Python', 'Django', 'JavaScript', 'React', 'SQL',
-        'Node.js', 'Flask', 'Machine Learning', 'Data Analysis'
-    ]
-    return [skill for skill in known_skills if re.search(rf'\b{re.escape(skill)}\b', text, re.IGNORECASE)]
+    prompt = f"""
+You are a resume parser. Extract main technical and non-technical skills from the following resume text. 
+Only return a clean Python list of skills like ["Skill1", "Skill2"], no markdown or explanation.
+
+Resume:
+\"\"\"
+{text}
+\"\"\"
+"""
+    try:
+        response = model.generate_content(prompt)
+        cleaned = response.text.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.replace("```python", "").replace("```", "").strip()
+        return ast.literal_eval(cleaned)
+    except Exception as e:
+        print("Error extracting skills:", e)
+        return []
+
 
 def extract_projects(text):
     return re.findall(r'(?i)(?:Project\s*[:\-]?\s*)(.*)', text)
@@ -34,35 +50,36 @@ The user listed "{skill}" in their resume but has not demonstrated it in project
 
 Generate a JSON response ONLY, without explanations.
 
-Each question should be a fill-in-the-blank type asking the user to complete a line of code or choose the correct syntax.
+The JSON should include:
+- 2 fill-in-the-blank questions (no options — user types the answer)
+- 2 multiple-choice questions (MCQ with 4 options)
 
-Required format:
+⚠️ Make questions relevant to the skill, regardless of domain (e.g., if skill is "Marketing", "Economics", "Public Speaking", or "Leadership").
+
+Use this format exactly:
 {{
+  "fill_in_the_blanks": [
+    {{
+      "question": "Fill in the blank question 1 about {skill}",
+      "answer": "Correct answer"
+    }},
+    ...
+    {{
+      "question": "Fill in the blank question 5 about {skill}",
+      "answer": "Correct answer"
+    }}
+  ],
   "mcqs": [
     {{
-      "question": "Complete the syntax: print(___)",
-      "options": ["'Hello World'", "print", "()", "'()'"],
-      "answer": "'Hello World'"
+      "question": "MCQ question 1 about {skill}",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "answer": "Correct option text"
     }},
+    ...
     {{
-      "question": "Fill in the blank: for i ___ range(5):",
-      "options": ["on", "in", "of", "into"],
-      "answer": "in"
-    }},
-    {{
-      "question": "Select correct syntax: def ___():",
-      "options": ["main", "func", "__init__", "function"],
-      "answer": "main"
-    }},
-    {{
-      "question": "Fill in: if a ___ b:",
-      "options": ["=", "==", "!=", "<>"],
-      "answer": "=="
-    }},
-    {{
-      "question": "Complete line: import ___",
-      "options": ["python", "os", "from", "sys.path"],
-      "answer": "os"
+      "question": "MCQ question 5 about {skill}",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "answer": "Correct option text"
     }}
   ]
 }}
@@ -73,8 +90,6 @@ Required format:
     except Exception as e:
         print("Gemini output error:", e)
         return None
-
-
 
 def clean_gemini_json(gemini_output):
     """
@@ -139,3 +154,133 @@ def generate_challenges_from_feedback(user, feedback_list):
         )
         created_count += 1
     return created_count
+
+
+def generate_dummy_projects(skills):
+    prompt = """
+    Based on the following skills: Python, Django, React, PostgreSQL, REST APIs, Machine Learning (specifically image classification), and basic mobile development (React Native), suggest 3 realistic and creative final-year software project ideas.
+
+    Each project should include:
+    - A short title
+    - A 3–5 line detailed description
+    - Technologies used
+
+    Format the output in JSON:
+    [
+    {
+        "title": "...",
+        "description": "...",
+        "technologies": "..."
+    },
+    ...
+    ]
+    """
+
+    response = model.generate_content(prompt)
+    return response.text
+def parse_project_response(response_text):
+    try:
+        cleaned = response_text.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned.replace("```json", "").replace("```", "").strip()
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        return [{
+            "title": "Parsing Failed",
+            "description": response_text,
+            "technologies": "Unknown"
+        }]
+def generate_project_execution_plan(project_title, description, skills):
+    prompt = f"""
+You are an expert project mentor.
+
+Give a clear, step-by-step weekly development plan to build this project:
+Title: {project_title}
+Description: {description}
+Skills: {', '.join(skills)}
+
+Return the plan in JSON format like:
+[
+  {{"week": 1, "task": "Setup backend using Django and PostgreSQL"}},
+  {{"week": 2, "task": "Build REST APIs for login and data storage"}},
+  ...
+]
+"""
+    response = model.generate_content(prompt)
+    try:
+        cleaned = response.text.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned.replace("```json", "").replace("```", "").strip()
+        return json.loads(cleaned)
+    except Exception as e:
+        print("❌ Plan parsing error:", e)
+        return [{"week": 0, "task": "Failed to generate project plan"}]
+
+
+def generate_projects_based_on_skills(skills):
+    prompt = f"""
+You're an AI suggesting unique project ideas for a resume.
+
+Skills: {', '.join(skills)}
+
+Give 3 project ideas in JSON like:
+[
+  {{
+    "title": "AI Recipe Recommender",
+    "description": "An app that recommends recipes based on ingredients using ML.",
+    "technologies": "Django, TensorFlow, PostgreSQL"
+  }},
+  ...
+]
+"""
+    try:
+        response = model.generate_content(prompt)
+        return json.loads(response.text.strip().strip("```json").strip("```"))
+    except Exception as e:
+        print("Project idea generation failed:", e)
+        return []
+
+def generate_project_plan(project_title, description, skills):
+    prompt = f"""
+Create a 12-week plan to build this project:
+
+Title: {project_title}
+Description: {description}
+Skills: {', '.join(skills)}
+
+Return JSON like:
+[
+  {{ "week": 1, "task": "Setup Django and GitHub repo" }},
+  ...
+]
+"""
+    try:
+        response = model.generate_content(prompt)
+        return json.loads(response.text.strip().strip("```json").strip("```"))
+    except Exception as e:
+        print("Plan generation failed:", e)
+        return []
+def generate_code_for_step(project_title, task_description, skills):
+    print("🔧 Calling Gemini for:", project_title, task_description)
+    prompt = f"""
+    You are a senior software engineer helping a student implement this software project.
+
+    Project Title: {project_title}
+    Skills: {', '.join(skills)}
+
+    Now implement the following development step as part of the project:
+    "{task_description}"
+
+    Your response must include:
+    - A brief 2–3 line explanation of what you're doing
+    - The relevant Python/Django/React code
+
+    Return it as plain text with NO markdown formatting (no ```python or backticks).
+    """
+    try:
+        response = model.generate_content(prompt)
+        print("📩 Gemini raw response:", response.text.strip())
+        return response.text.strip()
+    except Exception as e:
+        print("❌ Code generation failed:", e)
+        return "Gemini failed to generate code for this step."

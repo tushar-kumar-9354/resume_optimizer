@@ -1,26 +1,267 @@
-<!-- challenge_list.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Challenge List</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Skill Challenges Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <style>
+    :root {
+      --passed: #22c55e;
+      --failed: #ef4444;
+      --pending: #f59e0b;
+      --text-dark: #1f2937;
+      --text-light: #6b7280;
+      --bg: #f9fafb;
+      --card-bg: #fff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top left, #dbeafe, #fef9c3);
+      font-family: 'Inter', sans-serif;
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 3rem 1rem;
+    }
+
+    .container {
+      background: var(--card-bg);
+      max-width: 900px;
+      width: 100%;
+      padding: 2.5rem 3rem;
+      border-radius: 20px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+      animation: fadeInUp 1s ease both;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    h1 i {
+      color: var(--pending);
+      animation: bounce 1.5s infinite;
+    }
+
+    .challenge-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .challenge-item {
+      background: #fff;
+      border-left: 6px solid transparent;
+      padding: 1.8rem 2rem;
+      border-radius: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+      transform: translateY(20px);
+      opacity: 0;
+      animation: slideFade 0.7s ease forwards;
+    }
+
+    .challenge-item:nth-child(1) { animation-delay: 0.1s; }
+    .challenge-item:nth-child(2) { animation-delay: 0.2s; }
+    .challenge-item:nth-child(3) { animation-delay: 0.3s; }
+    .challenge-item:nth-child(4) { animation-delay: 0.4s; }
+
+    .challenge-item:hover {
+      transform: translateY(-4px) scale(1.01);
+      transition: all 0.3s ease;
+    }
+
+    .challenge-item.passed { border-left-color: var(--passed); background: #ecfdf5; }
+    .challenge-item.failed { border-left-color: var(--failed); background: #fef2f2; }
+    .challenge-item.pending { border-left-color: var(--pending); background: #fffbeb; }
+
+    .challenge-info {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .skill-name {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .meta-info {
+      display: flex;
+      gap: 20px;
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      transition: transform 0.3s ease;
+    }
+
+    .status:hover {
+      transform: scale(1.1);
+    }
+
+    .status.passed {
+      background: var(--passed);
+      color: #fff;
+    }
+
+    .status.failed {
+      background: var(--failed);
+      color: #fff;
+    }
+
+    .status.pending {
+      background: var(--pending);
+      color: #fff;
+    }
+
+    .view-btn {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .view-btn:hover {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      transform: translateX(5px) scale(1.05);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: #fff;
+      border-radius: 16px;
+      margin-top: 3rem;
+      animation: fadeIn 1.2s ease both;
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      color: var(--text-light);
+      margin-bottom: 1rem;
+    }
+
+    .empty-state h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+      color: var(--text-light);
+      margin-bottom: 1.5rem;
+    }
+
+    .create-btn {
+      background: linear-gradient(135deg, #10b981, #22c55e);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .create-btn:hover {
+      background: linear-gradient(135deg, #059669, #16a34a);
+      transform: scale(1.05);
+    }
+
+    @keyframes slideFade {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 700px) {
+      .container {
+        padding: 1.5rem;
+      }
+
+      .challenge-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .view-btn {
+        margin-top: 1rem;
+        align-self: flex-end;
+      }
+    }
+  </style>
 </head>
 <body>
-    <h1>📋 Your Skill Challenges</h1>
+  <div class="container">
+    <h1><i class="fas fa-trophy"></i> Skill Challenges</h1>
+
     {% if challenges %}
-        <ul>
-        {% for challenge in challenges %}
-            <li>
-                <strong>{{ challenge.skill.name }}</strong> — 
-                Status: <span style="color: {% if challenge.status == 'PASSED' %}green{% elif challenge.status == 'FAILED' %}red{% else %}orange{% endif %};">
-                    {{ challenge.status }}
-                </span><br>
-                <a href="{% url 'challenge_detail' challenge.id %}">🔍 View Challenge</a>
-            </li>
-            <hr>
-        {% endfor %}
-        </ul>
+    <ul class="challenge-list">
+      {% for challenge in challenges %}
+      <li
+        class="challenge-item {% if challenge.status == 'PASSED' %}passed{% elif challenge.status == 'FAILED' %}failed{% else %}pending{% endif %}"
+      >
+        <div class="challenge-info">
+          <div class="skill-name">{{ challenge.skill.name }}</div>
+          <div class="meta-info">
+            <span class="status {% if challenge.status == 'PASSED' %}passed{% elif challenge.status == 'FAILED' %}failed{% else %}pending{% endif %}">
+              <i class="fas {% if challenge.status == 'PASSED' %}fa-check-circle{% elif challenge.status == 'FAILED' %}fa-times-circle{% else %}fa-clock{% endif %}"></i>
+              {{ challenge.status }}
+            </span>
+            <span><i class="far fa-calendar-alt"></i> {{ challenge.created_at|date:"M d, Y" }}</span>
+          </div>
+        </div>
+        <a href="{% url 'challenge_detail' challenge.id %}" class="view-btn">
+          View <i class="fas fa-arrow-right"></i>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
     {% else %}
-        <p>No challenges found.</p>
+    <div class="empty-state">
+      <i class="fas fa-clipboard-list"></i>
+      <h2>No Challenges Found</h2>
+      <p>Start building your skills by creating your first challenge today.</p>
+      <a href="#" class="create-btn"><i class="fas fa-plus"></i> Create Challenge</a>
+    </div>
     {% endif %}
+  </div>
 </body>
 </html>
