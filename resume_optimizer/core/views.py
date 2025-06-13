@@ -264,3 +264,44 @@ from django.contrib.auth.decorators import login_required
 def project_timeline_view(request):
     steps = ProjectStep.objects.filter(user=request.user).order_by('week')
     return render(request, "core/timeline.html", {"steps": steps})
+
+# core/views.py
+
+from django.utils.timezone import now
+from datetime import timedelta
+from .models import ProjectStep
+
+@login_required
+def project_dashboard_view(request):
+    user = request.user
+    project_title = request.session.get("current_project_title", "")
+
+    steps = ProjectStep.objects.filter(user=user, project_title=project_title).order_by("week")
+
+    completed_count = steps.filter(status='DONE').count()
+    total_steps = steps.count()
+    percent_complete = int((completed_count / total_steps) * 100) if total_steps else 0
+
+    return render(request, "core/dashboard.html", {
+        "steps": steps,
+        "percent_complete": percent_complete,
+    })
+@login_required
+def regenerate_step_code(request, step_id):
+    step = get_object_or_404(ProjectStep, id=step_id, user=request.user)
+    skills = request.session.get("skills", [])
+    previous_steps = request.session.get("previous_steps", [])
+
+    new_code = generate_code_for_step(step.project_title, step.step_description, skills, previous_steps)
+    if "```" in new_code:
+        explanation, code = new_code.split("```", 1)
+    else:
+        explanation = new_code.splitlines()[0:3]
+        code = "\n".join(new_code.splitlines()[3:])
+
+    step.code_output = code.strip()
+    step.code_explanation = explanation.strip()
+    step.status = 'PENDING'
+    step.save()
+
+    return redirect("project_dashboard")

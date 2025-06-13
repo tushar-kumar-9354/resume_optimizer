@@ -32,17 +32,26 @@ class UserProfile(models.Model):
         return self.user.username
 from django.db import models
 from django.contrib.auth.models import User
+# core/models.py
+
+from django.db import models
+from django.contrib.auth.models import User
 
 class ProjectStep(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('DONE', 'Done'),
+        ('FAILED', 'Failed'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    project_title = models.CharField(max_length=255)
+    project_title = models.CharField(max_length=200)
     week = models.IntegerField()
     step_description = models.TextField()
-    code_output = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ("user", "project_title", "week")  # Prevent duplicates
+    code_output = models.TextField(blank=True)
+    code_explanation = models.TextField(blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
 
     def __str__(self):
         return f"{self.project_title} - Week {self.week}"
