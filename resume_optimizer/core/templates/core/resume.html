@@ -2,96 +2,163 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AI Resume Optimizer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚀 AI Resume Optimizer</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 30px; background-color: #f4f4f4; }
-    h1, h2 { color: #333; }
-    .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
-    .project-card { background: #f9f9f9; padding: 15px; margin-bottom: 20px; border-radius: 5px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
-    .button { background-color: #007bff; color: white; padding: 10px 16px; border: none; border-radius: 5px; cursor: pointer; }
-    .button:hover { background-color: #0056b3; }
-    pre { background: #f0f0f0; padding: 15px; border-radius: 5px; white-space: pre-wrap; }
+    .card { transition: transform 0.2s, box-shadow 0.2s; }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); }
+    .button { transition: background-color 0.3s, transform 0.2s; }
+    .button:hover { transform: scale(1.05); }
+    .error-message { animation: fadeIn 0.5s; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .timeline-item { position: relative; padding-left: 2.5rem; }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: 0.75rem;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #e5e7eb;
+    }
+    .timeline-icon {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: #3b82f6;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      font-weight: bold;
+    }
+    .collapse-content { transition: max-height 0.3s ease-out, opacity 0.3s ease-out; }
+    .collapse-content:not(.expanded) { max-height: 0; opacity: 0; overflow: hidden; }
+    .collapse-content.expanded { max-height: 500px; opacity: 1; }
   </style>
 </head>
-<body>
-  <div class="container">
-    <h1>Resume Skill & Project Generator</h1>
+<body class="bg-gray-100 font-sans antialiased">
+  <div class="container mx-auto p-6 max-w-4xl">
+    <h1 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+      🚀 AI Resume Optimizer
+    </h1>
 
     <!-- Upload Form -->
-    <form method="POST" enctype="multipart/form-data">
-      {% csrf_token %}
-      <label><strong>Upload your resume (PDF):</strong></label><br><br>
-      <input type="file" name="resume" accept=".pdf" required><br><br>
-      <button type="submit" class="button">Upload & Generate Projects</button>
-    </form>
+    <div class="bg-white rounded-lg p-6 mb-6 shadow-md card">
+      <h2 class="text-xl font-semibold text-gray-700 mb-4">Upload Your Resume</h2>
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label class="block text-gray-600 mb-2"><strong>Upload your resume (PDF):</strong></label>
+        <input type="file" name="resume" accept=".pdf" required class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+        <button type="submit" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium button">📤 Upload & Generate Projects</button>
+      </form>
+    </div>
 
     {% if skills %}
-      <hr>
-      <h2>🧠 Extracted Skills</h2>
-      <ul>
+      <hr class="my-6 border-gray-200">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-4">🧠 Extracted Skills</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {% for skill in skills %}
-          <li>{{ skill }}</li>
+          <div class="bg-white rounded-lg p-4 shadow-md card">
+            <span class="text-gray-800">{{ skill }}</span>
+          </div>
         {% endfor %}
-      </ul>
+      </div>
     {% endif %}
 
     {% if projects %}
-      <hr>
-      <h2>💡 Suggested Projects Based on Your Skills</h2>
+      <hr class="my-6 border-gray-200">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-4">💡 Suggested Projects</h2>
       {% for project in projects %}
-        <div class="project-card">
-          <h3>{{ project.title }}</h3>
-          <p>{{ project.description }}</p>
-          <p><strong>Technologies:</strong> {{ project.technologies }}</p>
-
-          <!-- Button to Get Execution Plan -->
-          <form method="POST">
+        <div class="bg-white rounded-lg p-6 mb-4 shadow-md card">
+          <h3 class="text-lg font-semibold text-gray-800">{{ project.title }}</h3>
+          <p class="text-gray-600 mt-2">{{ project.description }}</p>
+          <p class="text-gray-600 mt-2"><strong>Technologies:</strong> {{ project.technologies }}</p>
+          <form method="POST" class="mt-4">
             {% csrf_token %}
             <input type="hidden" name="action" value="plan">
             <input type="hidden" name="project_title" value="{{ project.title }}">
             <input type="hidden" name="project_description" value="{{ project.description }}">
             <input type="hidden" name="skills" value="{{ skills|join:', ' }}">
-            <button type="submit" class="button">🛠 Show Step-by-Step Plan</button>
+            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium button">🛠 Show Step-by-Step Plan</button>
           </form>
         </div>
       {% endfor %}
-
-      <!-- Button to Regenerate Ideas -->
-      <form method="POST">
+      <form method="POST" class="mt-4">
         {% csrf_token %}
         <input type="hidden" name="regenerate" value="1">
-        <button type="submit" class="button">🔁 Regenerate Project Ideas</button>
+        <button type="submit" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium button">🔁 Regenerate Project Ideas</button>
       </form>
     {% endif %}
 
     {% if plan %}
-      <hr>
-      <h2>🧩 Step-by-Step Execution Plan for <em>{{ request.session.current_project_title }}</em></h2>
-      <ul>
+      <hr class="my-6 border-gray-200">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-6">🧩 Execution Plan for <em>{{ request.session.current_project_title }}</em></h2>
+      <div class="space-y-6">
         {% for step in plan %}
-          <li>
-            <strong>Week {{ step.week }}:</strong> {{ step.task }}
-            <form action="{% url 'week_code' %}" method="POST" style="margin-top: 10px;">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="code">
-            <input type="hidden" name="step_description" value="{{ step.task }}">
-            <input type="hidden" name="project_title" value="{{ request.session.current_project_title }}">
-            <button class="button" type="submit">💻 Show Code for This Step</button>
-            </form>
-
-          </li>
+          <div class="timeline-item">
+            <div class="timeline-icon">{{ step.week }}</div>
+            <div class="bg-white rounded-lg p-5 shadow-md card">
+              <button type="button" class="w-full text-left flex justify-between items-center text-gray-800 font-semibold" onclick="toggleCollapse(this.nextElementSibling)">
+                <span>Week {{ step.week }}: {{ step.task }}</span>
+                <svg class="w-5 h-5 transform transition-transform toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              <div class="collapse-content mt-3">
+                <form action="{% url 'week_code' %}" method="POST">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="code">
+                  <input type="hidden" name="step_description" value="{{ step.task }}">
+                  <input type="hidden" name="project_title" value="{{ request.session.current_project_title }}">
+                  <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium button flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                    </svg>
+                    Show Code for This Step
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
         {% endfor %}
-      </ul>
+      </div>
     {% endif %}
 
     {% if code_output %}
-    <hr>
-    <h2>📜 Gemini Code Suggestion</h2>
-    <pre>{{ code_output }}</pre>
+      <hr class="my-6 border-gray-200">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-4">📜 Code Suggestion</h2>
+      <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-auto">{{ code_output }}</pre>
     {% elif request.POST.action == 'code' %}
-    <p style="color: red;">⚠️ Gemini did not return any code. Try another step or rewrite the task.</p>
+      <p class="text-red-600 mt-4 error-message">⚠️ No code returned. Try another step or rewrite the task.</p>
     {% endif %}
-
   </div>
+
+  <script>
+    // Add animation for cards on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      const cards = document.querySelectorAll('.card');
+      cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        setTimeout(() => {
+          card.style.transition = 'opacity 0.5s ease-in';
+          card.style.opacity = '1';
+        }, index * 100);
+      });
+    });
+
+    // Toggle collapse/expand for timeline items
+    function toggleCollapse(element) {
+      element.classList.toggle('expanded');
+      const icon = element.previousElementSibling.querySelector('.toggle-icon');
+      icon.classList.toggle('rotate-180');
+    }
+  </script>
 </body>
 </html>

@@ -14,7 +14,7 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('upload_resume')
+            return redirect('index')
     else:
         form = UserCreationForm()
     return render(request, 'core/register.html', {'form': form})
@@ -336,3 +336,9 @@ def mark_step_pending(request, step_id):
         step.save()
         return redirect("project_dashboard")
     return redirect("project_dashboard")  # Handle non-POST requests gracefully
+
+def index(request):
+    """
+    Renders the index page.
+    """
+    return render(request, 'core/index.html')

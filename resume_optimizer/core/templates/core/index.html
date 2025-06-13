@@ -1,0 +1,202 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Resume Optimizer | Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1920&auto=format&fit=crop') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Inter', sans-serif;
+      color: #f8fafc;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn {
+      background: linear-gradient(to right, #2dd4bf, #3b82f6);
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background: linear-gradient(to right, #26a69a, #2563eb);
+      transform: scale(1.05);
+    }
+
+    .header {
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+    }
+
+    .fade-in {
+      animation: fadeIn 1s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .highlight {
+      background: linear-gradient(to right, #ff6b6b, #feca57);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .disabled-card {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .logout-btn {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font: inherit;
+      padding: 0;
+    }
+
+    .logout-btn:hover {
+      color: #2dd4bf;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header fixed top-0 left-0 w-full z-50 py-4">
+    <nav class="container mx-auto px-6 flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-white">AI Resume Optimizer</h1>
+      <div class="flex items-center space-x-4">
+        {% if user.is_authenticated %}
+          <span class="text-white">Welcome, {{ user.username }}!</span>
+          <form action="{% url 'logout' %}" method="post" class="inline">
+            {% csrf_token %}
+            <button type="submit" class="logout-btn text-white hover:text-teal-300 transition">Logout</button>
+          </form>
+        {% else %}
+          <a href="{% url 'login' %}" id="login-btn" class="text-white hover:text-teal-300 transition">Login</a>
+          <a href="{% url 'register' %}" class="text-white hover:text-teal-300 transition">Register</a>
+        {% endif %}
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="min-h-screen flex items-center justify-center pt-16">
+    <div class="container mx-auto px-6 text-center">
+      <h2 class="text-5xl font-bold text-white mb-4 fade-in">Supercharge Your Resume with AI</h2>
+      <p class="text-lg text-gray-300 mb-8 fade-in">Upload your resume, get personalized project suggestions, and master new skills with our AI-driven platform.</p>
+      {% if user.is_authenticated %}
+        <a href="#features" onclick="scrollToFeatures()" class="btn inline-block text-white px-6 py-3 rounded-md font-semibold fade-in">Get Started</a>
+      {% else %}
+        <p class="text-lg text-red-300 mb-4 fade-in">Please log in to access features!</p>
+        <a href="{% url 'login' %}" class="btn inline-block text-white px-6 py-3 rounded-md font-semibold fade-in highlight">Login to Get Started</a>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="py-16 bg-gray-900">
+    <div class="container mx-auto px-6">
+      <h3 class="text-3xl font-bold text-white text-center mb-12">Key Features</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <!-- Test Your Knowledge -->
+        <a href="{% if user.is_authenticated %}{% url 'upload_resume' %}{% else %}{% url 'login' %}{% endif %}" class="card p-6 rounded-lg text-center">
+          <div class="text-teal-300 mb-4">
+            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01m-.01 4h.01"></path>
+            </svg>
+          </div>
+          <h4 class="text-xl font-semibold text-white mb-2">Test Your Knowledge</h4>
+          <p class="text-gray-300">Upload your resume to take an AI-generated test based on your skills.</p>
+        </a>
+
+        <!-- Create Project Ideas -->
+        <a href="{% url 'resume' %}" class="card p-6 rounded-lg text-center">
+          <div class="text-teal-300 mb-4">
+            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <h4 class="text-xl font-semibold text-white mb-2">Create Project Ideas</h4>
+            <p class="text-gray-300">Upload your resume to receive personalized project ideas and follow a step-by-step, AI-guided weekly schedule to build and enhance your skills.</p>
+        </a>
+
+        <!-- Project Timeline -->
+        <a href="{% url 'project_timeline' %}" class="card p-6 rounded-lg text-center">
+          <div class="text-teal-300 mb-4">
+            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h4 class="text-xl font-semibold text-white mb-2">Project Timeline</h4>
+          <p class="text-gray-300">Track your project progress with a detailed timeline dashboard.</p>
+        </a>
+
+        <!-- Your Challenges -->
+        <a href="{% url 'challenge_list' %}" class="card p-6 rounded-lg text-center">
+          <div class="text-teal-300 mb-4">
+            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <h4 class="text-xl font-semibold text-white mb-2">Your Challenges</h4>
+          <p class="text-gray-300">View all your created challenges and track your progress.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- GitHub Section -->
+  <section id="github" class="py-16 bg-gray-900">
+    <div class="container mx-auto px-6 text-center">
+      <h3 class="text-3xl font-bold text-white mb-6">Explore the Project</h3>
+      <p class="text-gray-300 mb-8">Check out the source code and contribute to the AI Resume Optimizer on GitHub!</p>
+      <a href="https://github.com/tushar-kumar-9354" target="_blank" rel="noopener noreferrer" class="btn inline-block text-white px-6 py-3 rounded-md font-semibold">
+        Visit GitHub
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-6 bg-black text-center">
+    <p class="text-gray-400">© 2025 AI Resume Optimizer. All rights reserved.</p>
+  </footer>
+
+  <script>
+    function scrollToFeatures() {
+      document.getElementById('features').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Highlight the login button if the user is not logged in
+    document.addEventListener('DOMContentLoaded', () => {
+      const loginBtn = document.getElementById('login-btn');
+      if (loginBtn && !{% if user.is_authenticated %}true{% else %}false{% endif %}) {
+        loginBtn.classList.add('highlight');
+      }
+    });
+  </script>
+</body>
+</html>

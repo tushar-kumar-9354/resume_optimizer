@@ -1,5 +1,6 @@
 # core/urls.py
 from django.urls import path
+from django.contrib.auth.views import LogoutView
 from . import views
 from .views import project_timeline_view , project_dashboard_view, regenerate_step_code , mark_step_done,mark_step_pending
 urlpatterns = [
@@ -13,5 +14,6 @@ urlpatterns = [
     path("step/<int:step_id>/mark-done/", mark_step_done, name="mark_step_done"),
     path("regenerate/<int:step_id>/", regenerate_step_code, name="regenerate_step"),
     path("step/<int:step_id>/mark-pending/", mark_step_pending, name="mark_step_pending"),
-
+    path('', views.index, name='index'),  # index.html view
+    path('logout/', LogoutView.as_view(next_page='index'), name='logout'),
 ]

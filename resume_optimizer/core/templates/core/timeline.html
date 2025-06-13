@@ -2,95 +2,95 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🗂 Project Timeline</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      padding: 40px;
-      background: #f4f6f8;
-      color: #333;
+    .card { transition: transform 0.2s, box-shadow 0.2s; }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); }
+    .button { transition: background-color 0.3s, transform 0.2s; }
+    .button:hover { transform: scale(1.05); }
+    pre { font-family: 'Fira Code', monospace; white-space: pre-wrap; }
+    .copy-btn { transition: background-color 0.3s; }
+    .copy-btn:hover { background-color: #2563eb; }
+    .timeline-item { position: relative; padding-left: 2.5rem; }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: 0.75rem;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #e5e7eb;
     }
-    h1 {
-      font-size: 32px;
-      text-align: center;
-      margin-bottom: 40px;
-      color: #222;
-    }
-    .step-card {
-      background: #ffffff;
-      padding: 25px;
-      border-radius: 12px;
-      margin-bottom: 30px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-    }
-    .step-card h3 {
-      margin-top: 0;
-      font-size: 22px;
-      color: #007bff;
-    }
-    .step-card p {
-      font-size: 16px;
-      margin: 12px 0;
-    }
-    .task {
-      background: #eef6ff;
-      padding: 12px;
-      border-left: 5px solid #007bff;
-      border-radius: 6px;
-      white-space: pre-wrap;
-      line-height: 1.6;
-      margin-bottom: 20px;
-    }
-    pre {
-      background-color: #1e1e1e;
-      color: #f8f8f2;
-      padding: 20px;
-      border-radius: 8px;
-      overflow-x: auto;
-      font-family: 'Fira Code', monospace;
-      font-size: 14px;
-      line-height: 1.7;
-      white-space: pre-wrap;
-    }
-    .empty-state {
-      text-align: center;
-      font-size: 18px;
-      margin-top: 50px;
-      color: #888;
-    }
-    .back-btn {
-      display: inline-block;
-      background: #007bff;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 6px;
-      text-decoration: none;
-      margin-top: 20px;
-      transition: background 0.3s;
-    }
-    .back-btn:hover {
-      background: #0056b3;
+    .timeline-icon {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: #3b82f6;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      font-weight: bold;
     }
   </style>
 </head>
-<body>
+<body class="bg-gray-100 font-sans antialiased">
+  <div class="container mx-auto p-6 max-w-4xl">
+    <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center flex items-center justify-center">
+      🗂 Project Timeline
+    </h1>
 
-  <h1>🗂 Project Timeline</h1>
+    {% for step in steps %}
+      <div class="timeline-item mb-6">
+        <div class="timeline-icon">{{ step.week }}</div>
+        <div class="bg-white rounded-lg p-6 shadow-md card">
+          <h3 class="text-xl font-semibold text-blue-600 mb-3">Week {{ step.week }} – {{ step.project_title }}</h3>
+          <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg text-gray-800 mb-4">
+            <strong>📝 Task:</strong> {{ step.step_description }}
+          </div>
+          <h4 class="text-lg font-semibold text-gray-700 mb-3 flex items-center justify-between">
+            💻 Code Output
+            <button onclick="copyCode(this)" class="copy-btn bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-medium">Copy Code</button>
+          </h4>
+          <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-auto text-sm">{{ step.code_output }}</pre>
+        </div>
+      </div>
+    {% empty %}
+      <div class="text-center text-gray-600 mt-12">
+        <p class="text-lg">🚫 No project steps saved yet.</p>
+        <a href="{% url 'resume' %}" class="mt-4 inline-block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium button">⬅ Back to Projects</a>
+      </div>
+    {% endfor %}
+  </div>
 
-  {% for step in steps %}
-    <div class="step-card">
-      <h3>Week {{ step.week }} – {{ step.project_title }}</h3>
-      <div class="task"><strong>📝 Task:</strong> {{ step.step_description }}</div>
-      <h4>💻 Code Output</h4>
-      <pre>{{ step.code_output }}</pre>
-    </div>
-  {% empty %}
-    <div class="empty-state">
-      <p>🚫 No project steps saved yet.</p>
-      <a href="{% url 'resume' %}" class="back-btn">⬅ Back to Projects</a>
-    </div>
-  {% endfor %}
+  <script>
+    function copyCode(button) {
+      const code = button.closest('.card').querySelector('pre').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        button.innerText = 'Copied!';
+        setTimeout(() => button.innerText = 'Copy Code', 2000);
+      });
+    }
 
+    // Add animation for cards on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      const cards = document.querySelectorAll('.card');
+      cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        setTimeout(() => {
+          card.style.transition = 'opacity 0.5s ease-in';
+          card.style.opacity = '1';
+        }, index * 100);
+      });
+    });
+  </script>
 </body>
 </html>

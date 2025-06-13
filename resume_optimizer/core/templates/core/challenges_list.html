@@ -16,6 +16,10 @@
       --text-light: #6b7280;
       --bg: #f9fafb;
       --card-bg: #fff;
+      --primary-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+      --primary-hover: linear-gradient(135deg, #4f46e5, #7c3aed);
+      --success-gradient: linear-gradient(135deg, #10b981, #22c55e);
+      --success-hover: linear-gradient(135deg, #059669, #16a34a);
     }
 
     * {
@@ -30,9 +34,45 @@
       color: var(--text-dark);
       min-height: 100vh;
       display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 3rem 1rem;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    .action-buttons {
+      max-width: 900px;
+      width: 100%;
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 15px;
+    }
+
+    .action-btn {
+      background: #fffbeb;
+      border-left: 6px solid var(--pending);
+      color: var(--text-dark);
+      padding: 1.2rem 2rem;
+      border-radius: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+      flex: 1;
+      font-size: 1rem;
+    }
+
+    .action-btn:hover {
+      background: #fef3c7;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .action-btn i {
+      color: var(--pending);
     }
 
     .container {
@@ -43,12 +83,13 @@
       border-radius: 20px;
       box-shadow: 0 12px 30px rgba(0,0,0,0.08);
       animation: fadeInUp 1s ease both;
+      position: relative;
     }
 
     h1 {
       font-size: 2.5rem;
       font-weight: 700;
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;
       display: flex;
       align-items: center;
       gap: 14px;
@@ -143,7 +184,7 @@
     }
 
     .view-btn {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: var(--primary-gradient);
       color: #fff;
       padding: 10px 18px;
       border: none;
@@ -158,8 +199,8 @@
     }
 
     .view-btn:hover {
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
-      transform: translateX(5px) scale(1.05);
+      background: var(--primary-hover);
+      transform: translateY(-2px) scale(1.05);
       box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
     }
 
@@ -189,7 +230,7 @@
     }
 
     .create-btn {
-      background: linear-gradient(135deg, #10b981, #22c55e);
+      background: var(--success-gradient);
       color: #fff;
       padding: 12px 24px;
       border-radius: 12px;
@@ -199,11 +240,13 @@
       align-items: center;
       gap: 10px;
       transition: all 0.3s ease;
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
     }
 
     .create-btn:hover {
-      background: linear-gradient(135deg, #059669, #16a34a);
-      transform: scale(1.05);
+      background: var(--success-hover);
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 8px 20px rgba(5, 150, 105, 0.4);
     }
 
     @keyframes slideFade {
@@ -214,6 +257,14 @@
     @media (max-width: 700px) {
       .container {
         padding: 1.5rem;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+      }
+
+      .action-btn {
+        padding: 1rem 1.5rem;
       }
 
       .challenge-item {
@@ -229,6 +280,15 @@
   </style>
 </head>
 <body>
+  <div class="action-buttons">
+    <a href="{% url 'index' %}" class="action-btn">
+      <i class="fas fa-home"></i> Home
+    </a>
+    <a href="{% url 'upload_resume' %}" class="action-btn">
+      <i class="fas fa-upload"></i> Upload another Resume
+    </a>
+  </div>
+
   <div class="container">
     <h1><i class="fas fa-trophy"></i> Skill Challenges</h1>
 
@@ -259,7 +319,7 @@
       <i class="fas fa-clipboard-list"></i>
       <h2>No Challenges Found</h2>
       <p>Start building your skills by creating your first challenge today.</p>
-      <a href="#" class="create-btn"><i class="fas fa-plus"></i> Create Challenge</a>
+      <a href="{% url 'upload_resume' %}" class="create-btn"><i class="fas fa-plus"></i> Create Challenge</a>
     </div>
     {% endif %}
   </div>
