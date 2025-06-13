@@ -305,3 +305,18 @@ def regenerate_step_code(request, step_id):
     step.save()
 
     return redirect("project_dashboard")
+@login_required
+def update_due_date(request, step_id):
+    if request.method == "POST":
+        step = get_object_or_404(ProjectStep, id=step_id, user=request.user)
+        due_date_str = request.POST.get("due_date")
+        if due_date_str:
+            step.due_date = due_date_str
+            step.save()
+    return redirect("project_dashboard")
+@login_required
+def mark_step_done(request, step_id):
+    step = get_object_or_404(ProjectStep, id=step_id, user=request.user)
+    step.status = "DONE"
+    step.save()
+    return redirect("project_dashboard")

@@ -3,17 +3,66 @@
 <head>
   <title>📊 Project Dashboard</title>
   <style>
-    body { font-family: Inter, sans-serif; background: #f6f8fa; padding: 30px; }
-    .card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-    .status { font-weight: bold; padding: 5px 10px; border-radius: 6px; }
-    .PENDING { background: #ffe58f; }
-    .DONE { background: #b7eb8f; }
-    .FAILED { background: #ffa39e; }
-    .btn { padding: 8px 12px; margin-left: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    body {
+      font-family: Inter, sans-serif;
+      background: #f6f8fa;
+      padding: 30px;
+    }
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .status {
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+    .PENDING {
+      background: #ffe58f;
+    }
+    .DONE {
+      background: #b7eb8f;
+    }
+    .FAILED {
+      background: #ffa39e;
+    }
+    .btn {
+      padding: 8px 12px;
+      margin: 5px 5px 5px 0;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .btn-warning {
+      background: #fa8c16;
+    }
+    .btn-success {
+      background: #52c41a;
+    }
+    .btn-secondary {
+      background: #595959;
+    }
+    h1 {
+      margin-bottom: 30px;
+    }
   </style>
 </head>
 <body>
   <h1>📊 Project Dashboard</h1>
+
+  <!-- ✅ Progress Bar -->
+  <div style="background: #e0e0e0; border-radius: 10px; overflow: hidden; margin-bottom: 20px; height: 25px;">
+    <div style="width: {{ percent_complete }}%; background: #52c41a; color: white; text-align: center; height: 100%; line-height: 25px;">
+      {{ percent_complete }}%
+    </div>
+  </div>
+
   <p><strong>Completion:</strong> {{ percent_complete }}%</p>
 
   {% for step in steps %}
@@ -22,9 +71,26 @@
       <p><strong>Status:</strong> <span class="status {{ step.status }}">{{ step.status }}</span></p>
       <p><strong>Due:</strong> {{ step.due_date|default:"Not Set" }}</p>
 
+      <!-- 📅 Update Due Date -->
+      <form method="POST" action="{% url 'update_due_date' step.id %}">
+        {% csrf_token %}
+        <label>📅 Due Date:</label>
+        <input type="date" name="due_date" value="{{ step.due_date|date:'Y-m-d' }}">
+        <button class="btn btn-warning">Update</button>
+      </form>
+
+      <!-- ✅ Mark as Done -->
+      {% if step.status != 'DONE' %}
+      <form method="POST" action="{% url 'mark_step_done' step.id %}">
+        {% csrf_token %}
+        <button class="btn btn-success">✅ Mark as Done</button>
+      </form>
+      {% endif %}
+
+      <!-- 🔁 Regenerate Step -->
       <form method="POST" action="{% url 'regenerate_step' step.id %}">
         {% csrf_token %}
-        <button class="btn">🔁 Regenerate</button>
+        <button class="btn btn-secondary">🔁 Regenerate</button>
       </form>
     </div>
   {% empty %}
