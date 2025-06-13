@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Resume Optimizer | Home</title>
+  <title>AI Resume Optimizer | Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -42,31 +42,36 @@
       backdrop-filter: blur(10px);
     }
 
-    .fade-in {
-      animation: fadeIn 1s ease-in;
+    .sidebar {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    .progress-bar {
+      height: 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.2);
     }
 
-    .highlight {
-      background: linear-gradient(to right, #ff6b6b, #feca57);
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      animation: pulse 2s infinite;
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(to right, #2dd4bf, #3b82f6);
+      transition: width 0.5s ease;
     }
 
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
+    .notification {
+      animation: slideIn 0.5s ease-out;
     }
 
-    .disabled-card {
-      opacity: 0.5;
-      cursor: not-allowed;
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .skill-badge {
+      background: rgba(45, 212, 191, 0.2);
+      border: 1px solid #2dd4bf;
     }
 
     .logout-btn {
@@ -81,6 +86,10 @@
     .logout-btn:hover {
       color: #2dd4bf;
     }
+    .highlight {
+  background: linear-gradient(to right, #ff6b6b, #feca57);
+  animation: pulse 2s infinite;
+}
   </style>
 </head>
 <body>
@@ -95,106 +104,426 @@
             {% csrf_token %}
             <button type="submit" class="logout-btn text-white hover:text-teal-300 transition">Logout</button>
           </form>
-        {% else %}
-          <a href="{% url 'login' %}" id="login-btn" class="text-white hover:text-teal-300 transition">Login</a>
-          <a href="{% url 'register' %}" class="text-white hover:text-teal-300 transition">Register</a>
         {% endif %}
       </div>
     </nav>
   </header>
 
-  <!-- Hero Section -->
-  <section class="min-h-screen flex items-center justify-center pt-16">
-    <div class="container mx-auto px-6 text-center">
-      <h2 class="text-5xl font-bold text-white mb-4 fade-in">Supercharge Your Resume with AI</h2>
-      <p class="text-lg text-gray-300 mb-8 fade-in">Upload your resume, get personalized project suggestions, and master new skills with our AI-driven platform.</p>
-      {% if user.is_authenticated %}
-        <a href="#features" onclick="scrollToFeatures()" class="btn inline-block text-white px-6 py-3 rounded-md font-semibold fade-in">Get Started</a>
-      {% else %}
-        <p class="text-lg text-red-300 mb-4 fade-in">Please log in to access features!</p>
-        <a href="{% url 'login' %}" class="btn inline-block text-white px-6 py-3 rounded-md font-semibold fade-in highlight">Login to Get Started</a>
-      {% endif %}
-    </div>
-  </section>
-
-  <!-- Features Section -->
-  <section id="features" class="py-16 bg-gray-900">
-    <div class="container mx-auto px-6">
-      <h3 class="text-3xl font-bold text-white text-center mb-12">Key Features</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <!-- Test Your Knowledge -->
-        <a href="{% if user.is_authenticated %}{% url 'upload_resume' %}{% else %}{% url 'login' %}{% endif %}" class="card p-6 rounded-lg text-center">
-          <div class="text-teal-300 mb-4">
-            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01m-.01 4h.01"></path>
-            </svg>
+  <!-- Dashboard Layout -->
+  <div class="flex pt-16 min-h-screen">
+    <!-- Sidebar -->
+    <aside class="sidebar w-64 fixed left-0 top-16 h-full hidden md:block">
+      <div class="p-6">
+        <div class="flex items-center space-x-4 mb-8">
+          <div class="w-12 h-12 rounded-full bg-teal-500 flex items-center justify-center text-white font-bold">
+            {{ user.username|first|upper }}
           </div>
-          <h4 class="text-xl font-semibold text-white mb-2">Test Your Knowledge</h4>
-          <p class="text-gray-300">Upload your resume to take an AI-generated test based on your skills.</p>
-        </a>
-
-        <!-- Create Project Ideas -->
-        <a href="{% url 'resume' %}" class="card p-6 rounded-lg text-center">
-          <div class="text-teal-300 mb-4">
-            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
+          <div>
+            <h3 class="text-white font-semibold">{{ user.username }}</h3>
+            <p class="text-gray-400 text-sm">Member since {{ user.date_joined|date:"M Y" }}</p>
           </div>
-          <h4 class="text-xl font-semibold text-white mb-2">Create Project Ideas</h4>
-            <p class="text-gray-300">Upload your resume to receive personalized project ideas and follow a step-by-step, AI-guided weekly schedule to build and enhance your skills.</p>
-        </a>
+        </div>
 
-        <!-- Project Timeline -->
-        <a href="{% url 'project_timeline' %}" class="card p-6 rounded-lg text-center">
-          <div class="text-teal-300 mb-4">
-            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-          </div>
-          <h4 class="text-xl font-semibold text-white mb-2">Project Timeline</h4>
-          <p class="text-gray-300">Track your project progress with a detailed timeline dashboard.</p>
-        </a>
-
-        <!-- Your Challenges -->
-        <a href="{% url 'challenge_list' %}" class="card p-6 rounded-lg text-center">
-          <div class="text-teal-300 mb-4">
-            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-          </div>
-          <h4 class="text-xl font-semibold text-white mb-2">Your Challenges</h4>
-          <p class="text-gray-300">View all your created challenges and track your progress.</p>
-        </a>
+        <nav>
+          <ul class="space-y-2">
+            <li>
+              <a href="{% url 'project_dashboard' %}" class="flex items-center space-x-3 text-white bg-teal-900 bg-opacity-50 px-4 py-3 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'upload_resume' %}" class="flex items-center space-x-3 text-gray-300 hover:text-white px-4 py-3 rounded-lg transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                <span>Test Knowledge</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'resume' %}" class="flex items-center space-x-3 text-gray-300 hover:text-white px-4 py-3 rounded-lg transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span>Project Ideas</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'project_timeline' %}" class="flex items-center space-x-3 text-gray-300 hover:text-white px-4 py-3 rounded-lg transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Project Timeline</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'challenge_list' %}" class="flex items-center space-x-3 text-gray-300 hover:text-white px-4 py-3 rounded-lg transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Your Challenges</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
       </div>
-    </div>
-  </section>
+    </aside>
 
-  <!-- GitHub Section -->
-  <section id="github" class="py-16 bg-gray-900">
-    <div class="container mx-auto px-6 text-center">
-      <h3 class="text-3xl font-bold text-white mb-6">Explore the Project</h3>
-      <p class="text-gray-300 mb-8">Check out the source code and contribute to the AI Resume Optimizer on GitHub!</p>
-      <a href="https://github.com/tushar-kumar-9354" target="_blank" rel="noopener noreferrer" class="btn inline-block text-white px-6 py-3 rounded-md font-semibold">
-        Visit GitHub
+    <!-- Main Content -->
+    <main class="flex-1 md:ml-64 p-6">
+      <div class="container mx-auto">
+        <!-- Welcome Section -->
+        <div class="mb-8">
+          <h2 class="text-3xl font-bold text-white mb-2">Welcome back, {{ user.username }}!</h2>
+          <p class="text-gray-300">Here's what's happening with your projects today.</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="card p-6 rounded-lg">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400">Active Projects</p>
+                <h3 class="text-2xl font-bold text-white">3</h3>
+              </div>
+              <div class="text-teal-300">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="card p-6 rounded-lg">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400">Completed Challenges</p>
+                <h3 class="text-2xl font-bold text-white">5</h3>
+              </div>
+              <div class="text-teal-300">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="card p-6 rounded-lg">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400">Skills Improved</p>
+                <h3 class="text-2xl font-bold text-white">8</h3>
+              </div>
+              <div class="text-teal-300">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="card p-6 rounded-lg">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400">Knowledge Score</p>
+                <h3 class="text-2xl font-bold text-white">78%</h3>
+              </div>
+              <div class="text-teal-300">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Current Projects -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <!-- Active Projects -->
+          <div class="card p-6 rounded-lg lg:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-xl font-semibold text-white">Active Projects</h3>
+              <a href="{% url 'project_timeline' %}" class="text-teal-300 text-sm hover:underline">View All</a>
+            </div>
+
+            <div class="space-y-4">
+              <!-- Project 1 -->
+              <div class="p-4 rounded-lg bg-gray-800 bg-opacity-50">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="font-medium text-white">E-commerce API with Django</h4>
+                  <span class="text-xs px-2 py-1 bg-teal-900 bg-opacity-50 text-teal-300 rounded">Week 2/4</span>
+                </div>
+                <p class="text-sm text-gray-400 mb-3">Building a RESTful API for an online store with authentication and payment integration.</p>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 45%"></div>
+                </div>
+              </div>
+
+              <!-- Project 2 -->
+              <div class="p-4 rounded-lg bg-gray-800 bg-opacity-50">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="font-medium text-white">React Dashboard</h4>
+                  <span class="text-xs px-2 py-1 bg-teal-900 bg-opacity-50 text-teal-300 rounded">Week 1/3</span>
+                </div>
+                <p class="text-sm text-gray-400 mb-3">Creating an interactive admin dashboard with charts and data visualization.</p>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 20%"></div>
+                </div>
+              </div>
+
+              <!-- Project 3 -->
+              <div class="p-4 rounded-lg bg-gray-800 bg-opacity-50">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="font-medium text-white">Machine Learning Model</h4>
+                  <span class="text-xs px-2 py-1 bg-teal-900 bg-opacity-50 text-teal-300 rounded">Week 3/5</span>
+                </div>
+                <p class="text-sm text-gray-400 mb-3">Developing a predictive model for customer churn analysis.</p>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 60%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="card p-6 rounded-lg">
+            <h3 class="text-xl font-semibold text-white mb-4">Recent Activity</h3>
+            <div class="space-y-4">
+              <div class="flex items-start space-x-3">
+                <div class="text-teal-300 mt-1">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm text-white">Completed challenge "Authentication System"</p>
+                  <p class="text-xs text-gray-400">2 hours ago</p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-3">
+                <div class="text-teal-300 mt-1">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm text-white">Started new project "React Dashboard"</p>
+                  <p class="text-xs text-gray-400">1 day ago</p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-3">
+                <div class="text-teal-300 mt-1">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm text-white">Uploaded updated resume</p>
+                  <p class="text-xs text-gray-400">2 days ago</p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-3">
+                <div class="text-teal-300 mt-1">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm text-white">Improved Python skill to Advanced</p>
+                  <p class="text-xs text-gray-400">3 days ago</p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-3">
+                <div class="text-teal-300 mt-1">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm text-white">Completed challenge "Database Design"</p>
+                  <p class="text-xs text-gray-400">5 days ago</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skills & Quick Actions -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Top Skills -->
+          <div class="card p-6 rounded-lg">
+            <h3 class="text-xl font-semibold text-white mb-4">Your Top Skills</h3>
+            <div class="space-y-3">
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm font-medium text-white">Python</span>
+                  <span class="text-sm text-gray-400">Advanced</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 85%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm font-medium text-white">Django</span>
+                  <span class="text-sm text-gray-400">Intermediate</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 65%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm font-medium text-white">JavaScript</span>
+                  <span class="text-sm text-gray-400">Intermediate</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 60%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm font-medium text-white">React</span>
+                  <span class="text-sm text-gray-400">Beginner</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 40%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm font-medium text-white">SQL</span>
+                  <span class="text-sm text-gray-400">Intermediate</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 70%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card p-6 rounded-lg lg:col-span-2">
+            <h3 class="text-xl font-semibold text-white mb-4">Quick Actions</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <a href="{% url 'upload_resume' %}" class="p-4 rounded-lg bg-gray-800 bg-opacity-50 hover:bg-opacity-70 transition flex items-center space-x-3">
+                <div class="text-teal-300">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="font-medium text-white">Upload Resume</h4>
+                  <p class="text-sm text-gray-400">Update your skills and experience</p>
+                </div>
+              </a>
+
+              <a href="{% url 'resume' %}" class="p-4 rounded-lg bg-gray-800 bg-opacity-50 hover:bg-opacity-70 transition flex items-center space-x-3">
+                <div class="text-teal-300">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="font-medium text-white">New Project</h4>
+                  <p class="text-sm text-gray-400">Get personalized project ideas</p>
+                </div>
+              </a>
+
+              <a href="{% url 'challenge_list' %}" class="p-4 rounded-lg bg-gray-800 bg-opacity-50 hover:bg-opacity-70 transition flex items-center space-x-3">
+                <div class="text-teal-300">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="font-medium text-white">Take Challenge</h4>
+                  <p class="text-sm text-gray-400">Test your skills</p>
+                </div>
+              </a>
+
+              <a href="{% url 'project_timeline' %}" class="p-4 rounded-lg bg-gray-800 bg-opacity-50 hover:bg-opacity-70 transition flex items-center space-x-3">
+                <div class="text-teal-300">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="font-medium text-white">View Timeline</h4>
+                  <p class="text-sm text-gray-400">Track your progress</p>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Mobile Bottom Navigation -->
+  <div class="md:hidden fixed bottom-0 left-0 right-0 bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-sm border-t border-gray-800">
+    <div class="flex justify-around">
+      <a href="{% url 'project_dashboard' %}" class="flex flex-col items-center justify-center p-3 text-teal-300">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+        </svg>
+        <span class="text-xs mt-1">Home</span>
+      </a>
+      <a href="{% url 'resume' %}" class="flex flex-col items-center justify-center p-3 text-gray-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <span class="text-xs mt-1">Projects</span>
+      </a>
+      <a href="{% url 'project_timeline' %}" class="flex flex-col items-center justify-center p-3 text-gray-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span class="text-xs mt-1">Timeline</span>
+      </a>
+      <a href="{% url 'challenge_list' %}" class="flex flex-col items-center justify-center p-3 text-gray-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <span class="text-xs mt-1">Challenges</span>
       </a>
     </div>
-  </section>
+  </div>
 
   <!-- Footer -->
-  <footer class="py-6 bg-black text-center">
+  <footer class="py-6 bg-black text-center md:ml-64">
     <p class="text-gray-400">© 2025 AI Resume Optimizer. All rights reserved.</p>
   </footer>
 
   <script>
-    function scrollToFeatures() {
-      document.getElementById('features').scrollIntoView({ behavior: 'smooth' });
+    // Simple notification system
+    function showNotification(message) {
+      const notification = document.createElement('div');
+      notification.className = 'fixed bottom-4 right-4 bg-teal-900 text-white px-6 py-3 rounded-lg shadow-lg notification';
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 5000);
     }
 
-    // Highlight the login button if the user is not logged in
+    // Example usage - you can trigger this based on actual events
     document.addEventListener('DOMContentLoaded', () => {
-      const loginBtn = document.getElementById('login-btn');
-      if (loginBtn && !{% if user.is_authenticated %}true{% else %}false{% endif %}) {
-        loginBtn.classList.add('highlight');
+      // Check if we should show a welcome notification
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('welcome')) {
+        showNotification('Welcome back! Check out your new project recommendations.');
       }
     });
   </script>
