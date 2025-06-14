@@ -6,7 +6,7 @@ from django.contrib.auth import login
 from django.contrib import messages
 from .forms import ResumeUploadForm
 from .models import UserProfile, Challenge
-from .utils import extract_resume_text, generate_challenges_from_feedback, analyze_resume
+from .utils import extract_resume_text, generate_challenges_from_feedback, analyze_resume, log_activity
 
 def register(request):
     if request.method == 'POST':
@@ -18,52 +18,85 @@ def register(request):
     else:
         form = UserCreationForm()
     return render(request, 'core/register.html', {'form': form})
-
 @login_required
 def upload_resume(request):
     if request.method == 'POST':
         form = ResumeUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            user_profile, created = UserProfile.objects.get_or_create(user=request.user)
-
-            new_resume = form.cleaned_data['resume']
-            if user_profile.resume and user_profile.resume.name == new_resume.name:
-                messages.info(request, "You've already uploaded this resume.")
-                print("already  uploaded same resume....")
-                return redirect('challenge_list')
-
-            user_profile.resume = new_resume
-            user_profile.save()
-
-            uploaded_file = request.FILES['resume']
-            uploaded_file.seek(0)
-
             try:
+                user_profile, created = UserProfile.objects.get_or_create(user=request.user)
+                new_resume = form.cleaned_data['resume']
+                
+                # Save the file
+                user_profile.resume = new_resume
+                user_profile.save()
+                
+                # Process the file
+                uploaded_file = request.FILES['resume']
+                uploaded_file.seek(0)
+                
+                # Extract text
                 resume_text = extract_resume_text(uploaded_file)
-            except Exception as e:
-                messages.error(request, f"Error reading resume PDF: {str(e)}")
-                print("Error reading resume PDF:", e)
-                return redirect('upload_resume')
-
-            feedback = analyze_resume(resume_text)
-            print("🧠 AI Feedback:", feedback)
-
-            try:
+                user_profile.resume_text = resume_text[:100000]
+                user_profile.save()
+                
+                # Log activity - using exact type from model
+                Activity.objects.create(
+                    user=request.user,
+                    activity_type='RESUME_UPLOAD',  # Must match exactly
+                    title='Uploaded new resume',
+                    details=f"Filename: {new_resume.name[:200]}"
+                )
+                
+                # Analyze resume
+                feedback = analyze_resume(resume_text)
+                
+                # Log analysis - using exact type from model
+                Activity.objects.create(
+                    user=request.user,
+                    activity_type='RESUME_ANALYSIS',  # Must match exactly
+                    title='Resume analysis completed',
+                    details=f"Analysis summary: {feedback[:500]}"
+                )
+                
+                # Generate challenges
                 generated_count = generate_challenges_from_feedback(request.user, feedback)
-                if generated_count:
-                    messages.success(request, f'{generated_count} new challenges generated based on your resume!')
+                
+                if generated_count > 0:
+                    Activity.objects.create(
+                        user=request.user,
+                        activity_type='CHALLENGES_GENERATED',  # Must match exactly
+                        title='Generated new challenges',
+                        details=f"Count: {generated_count}"
+                    )
                 else:
-                    messages.info(request, 'No new challenges generated.')
-            except Exception as e:
-                messages.error(request, f"Error generating challenges: {str(e)}")
+                    Activity.objects.create(
+                        user=request.user,
+                        activity_type='NO_CHALLENGES',
+                        title='No new challenges',
+                        details="Resume analysis didn't generate new challenges"
+                    )
+                
                 return redirect('/challenges/')
-
-            return redirect('/challenges/')
-    else:
-        form = ResumeUploadForm()
+                
+            except Exception as e:
+                # Log error activity
+                Activity.objects.create(
+                    user=request.user,
+                    activity_type='RESUME_UPLOAD_ERROR',
+                    title='Resume processing failed',
+                    details=f"Error: {str(e)}"
+                )
+                messages.error(request, f"Error processing resume: {str(e)}")
+                return redirect('upload_resume')
+    
+    form = ResumeUploadForm()
+    print("User ID:", request.user.id)
+    from django.db import connection
+    for query in connection.queries:
+        print(query)
 
     return render(request, 'core/upload_resume.html', {'form': form})
-
 @login_required
 def challenge_list(request):
     challenges = Challenge.objects.filter(user=request.user)
@@ -342,3 +375,35 @@ def index(request):
     Renders the index page.
     """
     return render(request, 'core/index.html')
+
+from django.http import JsonResponse
+from django.core.serializers.json import DjangoJSONEncoder
+from .models import Activity
+import json
+
+@login_required
+def user_activities(request):
+    activities = Activity.objects.filter(user=request.user).order_by('-timestamp')[:10]
+    
+    activity_data = []
+    for activity in activities:
+        activity_data.append({
+            'title': activity.title,
+            'details': activity.details,
+            'icon_path': activity.get_icon_path(),
+            'time_ago': activity.get_time_ago(),
+        })
+    
+    return JsonResponse(
+        {'activities': activity_data},
+        encoder=DjangoJSONEncoder,
+        safe=False
+    )
+@login_required
+def test_user(request):
+    from django.http import JsonResponse
+    return JsonResponse({
+        'username': request.user.username,
+        'email': request.user.email,
+        'id': request.user.id
+    })

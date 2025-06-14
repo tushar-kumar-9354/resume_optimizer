@@ -16,4 +16,6 @@ urlpatterns = [
     path("step/<int:step_id>/mark-pending/", mark_step_pending, name="mark_step_pending"),
     path('', views.index, name='index'),  # index.html view
     path('logout/', LogoutView.as_view(next_page='index'), name='logout'),
+    path('api/user/activities/', views.user_activities, name='user_activities'),
+    path('test-user/', views.test_user, name='test_user'),
 ]

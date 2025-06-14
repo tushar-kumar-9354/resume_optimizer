@@ -55,3 +55,60 @@ class ProjectStep(models.Model):
 
     def __str__(self):
         return f"{self.project_title} - Week {self.week}"
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+class Activity(models.Model):
+    ACTIVITY_TYPES = [
+        ('CHALLENGE_COMPLETE', 'Challenge Completed'),
+        ('PROJECT_START', 'Project Started'),
+        ('SKILL_IMPROVE', 'Skill Improved'),
+        ('PROJECT_UPDATE', 'Project Updated'),
+        ('RESUME_UPLOAD', 'Resume Uploaded'),
+        ('RESUME_UPLOAD_ATTEMPT', 'Duplicate Resume Attempt'),
+        ('RESUME_UPLOAD_ERROR', 'Resume Upload Error'),
+        ('RESUME_ANALYSIS', 'Resume Analyzed'),  # Fixed typo
+        ('CHALLENGES_GENERATED', 'Challenges Generated'),  # Fixed typo
+        ('NO_CHALLENGES', 'No Challenges Generated'),
+        ('CHALLENGE_GENERATION_ERROR', 'Challenge Generation Error')
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    activity_type = models.CharField(max_length=50, choices=ACTIVITY_TYPES)
+    title = models.CharField(max_length=100)
+    details = models.TextField(blank=True)
+    timestamp = models.DateTimeField(default=timezone.now)
+    
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name_plural = "Activities"
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.get_activity_type_display()}: {self.title}"
+    
+    def get_icon_path(self):
+        """Returns SVG path based on activity type"""
+        icon_map = {
+            'RESUME_UPLOAD': 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
+            'CHALLENGE_COMPLETE': 'M5 13l4 4L19 7',
+            'SKILL_IMPROVE': 'M13 10V3L4 14h7v7l9-11h-7z',
+            'PROJECT_START': 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+            'RESUME_ANALYSIS': 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
+            'CHALLENGES_GENERATED': 'M13 10V3L4 14h7v7l9-11h-7z',
+        }
+        return icon_map.get(self.activity_type, 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z')
+    
+    def get_time_ago(self):
+        """Returns human-readable time difference"""
+        from django.utils import timezone
+        diff = timezone.now() - self.timestamp
+        
+        if diff.days > 0:
+            return f"{diff.days} day{'s' if diff.days > 1 else ''} ago"
+        if diff.seconds > 3600:
+            hours = diff.seconds // 3600
+            return f"{hours} hour{'s' if hours > 1 else ''} ago"
+        if diff.seconds > 60:
+            minutes = diff.seconds // 60
+            return f"{minutes} minute{'s' if minutes > 1 else ''} ago"
+        return "just now"

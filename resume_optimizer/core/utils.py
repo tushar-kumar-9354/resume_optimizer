@@ -293,3 +293,21 @@ Now generate the code.
         return response.text.strip()
     except Exception as e:
         return f"⚠️ Code generation error: {e}"
+from django.utils import timezone
+from .models import Activity
+
+def log_activity(user, activity_type, title, details=""):
+    """
+    Logs a new activity for the user
+    """
+    Activity.objects.create(
+        user=user,
+        activity_type=activity_type,
+        title=title,
+        details=details,
+        timestamp=timezone.now()
+    )
+    
+    # Keep only the last 20 activities per user
+    activities_to_delete = Activity.objects.filter(user=user).order_by('-timestamp')[20:].iterator()
+   

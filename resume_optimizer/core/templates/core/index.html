@@ -286,74 +286,30 @@
               </div>
             </div>
           </div>
-
-          <!-- Recent Activity -->
-          <div class="card p-6 rounded-lg">
-            <h3 class="text-xl font-semibold text-white mb-4">Recent Activity</h3>
-            <div class="space-y-4">
-              <div class="flex items-start space-x-3">
-                <div class="text-teal-300 mt-1">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-sm text-white">Completed challenge "Authentication System"</p>
-                  <p class="text-xs text-gray-400">2 hours ago</p>
-                </div>
-              </div>
-
-              <div class="flex items-start space-x-3">
-                <div class="text-teal-300 mt-1">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-sm text-white">Started new project "React Dashboard"</p>
-                  <p class="text-xs text-gray-400">1 day ago</p>
-                </div>
-              </div>
-
-              <div class="flex items-start space-x-3">
-                <div class="text-teal-300 mt-1">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-sm text-white">Uploaded updated resume</p>
-                  <p class="text-xs text-gray-400">2 days ago</p>
-                </div>
-              </div>
-
-              <div class="flex items-start space-x-3">
-                <div class="text-teal-300 mt-1">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-sm text-white">Improved Python skill to Advanced</p>
-                  <p class="text-xs text-gray-400">3 days ago</p>
-                </div>
-              </div>
-
-              <div class="flex items-start space-x-3">
-                <div class="text-teal-300 mt-1">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                </div>
-                <div>
-                  <p class="text-sm text-white">Completed challenge "Database Design"</p>
-                  <p class="text-xs text-gray-400">5 days ago</p>
-                </div>
-              </div>
+        <!-- Recent Activity -->
+        <div class="card p-6 rounded-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white">Recent Activity</h3>
+                <button onclick="refreshActivities()" class="text-teal-300 hover:text-teal-200 text-sm flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh
+                </button>
             </div>
-          </div>
-        </div>
-
+            
+            <div id="activities-container" class="space-y-4">
+                <!-- Loading state -->
+                <div id="activities-loading" class="flex justify-center py-4">
+                    <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-teal-400"></div>
+                </div>
+                
+                <!-- Fallback content (shown only if JavaScript fails) -->
+                <div id="activities-fallback" class="hidden">
+                    <!-- Your original hardcoded examples would go here -->
+                </div>
+            </div>
+        </div>  
         <!-- Skills & Quick Actions -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Top Skills -->
@@ -413,92 +369,92 @@
           </div>
 
           <!-- Quick Actions -->
-          <div class="card p-6 rounded-lg lg:col-span-2">
-            <h3 class="text-xl font-semibold text-white mb-4">Quick Actions</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <a href="{% url 'upload_resume' %}" class="p-4 rounded-lg bg-gray-800 bg-opacity-50 hover:bg-opacity-70 transition flex items-center space-x-3">
-                <div class="text-teal-300">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                  </svg>
-                </div>
-                <div>
-                  <h4 class="font-medium text-white">Upload Resume</h4>
-                  <p class="text-sm text-gray-400">Update your skills and experience</p>
-                </div>
-              </a>
+        <div class="card p-6 rounded-lg lg:col-span-2">
+          <h3 class="text-xl font-semibold text-white mb-4">Quick Actions</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <a href="{% url 'upload_resume' %}" class="p-4 rounded-lg bg-gray-800 bg-opacity-50 hover:bg-opacity-70 transition flex items-center space-x-3">
+              <div class="text-teal-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 class="font-medium text-white">Upload Resume</h4>
+                <p class="text-sm text-gray-400">Update your skills and experience</p>
+              </div>
+            </a>
 
-              <a href="{% url 'resume' %}" class="p-4 rounded-lg bg-gray-800 bg-opacity-50 hover:bg-opacity-70 transition flex items-center space-x-3">
-                <div class="text-teal-300">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                  </svg>
-                </div>
-                <div>
-                  <h4 class="font-medium text-white">New Project</h4>
-                  <p class="text-sm text-gray-400">Get personalized project ideas</p>
-                </div>
-              </a>
+            <a href="{% url 'resume' %}" class="p-4 rounded-lg bg-gray-800 bg-opacity-50 hover:bg-opacity-70 transition flex items-center space-x-3">
+              <div class="text-teal-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 class="font-medium text-white">New Project</h4>
+                <p class="text-sm text-gray-400">Get personalized project ideas</p>
+              </div>
+            </a>
 
-              <a href="{% url 'challenge_list' %}" class="p-4 rounded-lg bg-gray-800 bg-opacity-50 hover:bg-opacity-70 transition flex items-center space-x-3">
-                <div class="text-teal-300">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                  </svg>
-                </div>
-                <div>
-                  <h4 class="font-medium text-white">Take Challenge</h4>
-                  <p class="text-sm text-gray-400">Test your skills</p>
-                </div>
-              </a>
+            <a href="{% url 'challenge_list' %}" class="p-4 rounded-lg bg-gray-800 bg-opacity-50 hover:bg-opacity-70 transition flex items-center space-x-3">
+              <div class="text-teal-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 class="font-medium text-white">Take Challenge</h4>
+                <p class="text-sm text-gray-400">Test your skills</p>
+              </div>
+            </a>
 
-              <a href="{% url 'project_timeline' %}" class="p-4 rounded-lg bg-gray-800 bg-opacity-50 hover:bg-opacity-70 transition flex items-center space-x-3">
-                <div class="text-teal-300">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                </div>
-                <div>
-                  <h4 class="font-medium text-white">View Timeline</h4>
-                  <p class="text-sm text-gray-400">Track your progress</p>
-                </div>
-              </a>
-            </div>
+            <a href="{% url 'project_timeline' %}" class="p-4 rounded-lg bg-gray-800 bg-opacity-50 hover:bg-opacity-70 transition flex items-center space-x-3">
+              <div class="text-teal-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 class="font-medium text-white">View Timeline</h4>
+                <p class="text-sm text-gray-400">Track your progress</p>
+              </div>
+            </a>
           </div>
         </div>
       </div>
-    </main>
-  </div>
-
-  <!-- Mobile Bottom Navigation -->
-  <div class="md:hidden fixed bottom-0 left-0 right-0 bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-sm border-t border-gray-800">
-    <div class="flex justify-around">
-      <a href="{% url 'project_dashboard' %}" class="flex flex-col items-center justify-center p-3 text-teal-300">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-        </svg>
-        <span class="text-xs mt-1">Home</span>
-      </a>
-      <a href="{% url 'resume' %}" class="flex flex-col items-center justify-center p-3 text-gray-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-        <span class="text-xs mt-1">Projects</span>
-      </a>
-      <a href="{% url 'project_timeline' %}" class="flex flex-col items-center justify-center p-3 text-gray-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <span class="text-xs mt-1">Timeline</span>
-      </a>
-      <a href="{% url 'challenge_list' %}" class="flex flex-col items-center justify-center p-3 text-gray-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-        </svg>
-        <span class="text-xs mt-1">Challenges</span>
-      </a>
     </div>
+  </main>
+</div>
+
+<!-- Mobile Bottom Navigation -->
+<div class="md:hidden fixed bottom-0 left-0 right-0 bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-sm border-t border-gray-800">
+  <div class="flex justify-around">
+    <a href="{% url 'project_dashboard' %}" class="flex flex-col items-center justify-center p-3 text-teal-300">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+      </svg>
+      <span class="text-xs mt-1">Home</span>
+    </a>
+    <a href="{% url 'resume' %}" class="flex flex-col items-center justify-center p-3 text-gray-400">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+      </svg>
+      <span class="text-xs mt-1">Projects</span>
+    </a>
+    <a href="{% url 'project_timeline' %}" class="flex flex-col items-center justify-center p-3 text-gray-400">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <span class="text-xs mt-1">Timeline</span>
+    </a>
+    <a href="{% url 'challenge_list' %}" class="flex flex-col items-center justify-center p-3 text-gray-400">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <span class="text-xs mt-1">Challenges</span>
+    </a>
   </div>
+</div>
 
   <!-- Footer -->
   <footer class="py-6 bg-black text-center md:ml-64">
@@ -526,6 +482,82 @@
         showNotification('Welcome back! Check out your new project recommendations.');
       }
     });
-  </script>
+
+// Fetch and display real activities
+function loadActivities() {
+    try {
+        const container = document.getElementById('activities-container');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        
+        // Exit if no container
+        if (!container) return;
+        
+        // Show loading state
+        if (loadingIndicator) loadingIndicator.style.display = 'block';
+        container.innerHTML = '';
+
+        fetch('/api/user/activities/')
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                if (!data.activities || data.activities.length === 0) {
+                    container.innerHTML = '<div class="no-activities">No recent activities</div>';
+                    return;
+                }
+
+                data.activities.forEach(activity => {
+                    const activityEl = document.createElement('div');
+                    activityEl.className = 'activity-item';
+                    activityEl.innerHTML = `
+                        <div class="activity-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <path d="${activity.icon_path}"/>
+                            </svg>
+                        </div>
+                        <div class="activity-content">
+                            <strong>${activity.title}</strong>
+                            <small>${activity.time_ago}</small>
+                            <p>${activity.details}</p>
+                        </div>
+                    `;
+                    container.appendChild(activityEl);
+                });
+            })
+            .catch(error => {
+                console.error('Activity load error:', error);
+                container.innerHTML = '<div class="error-message">Failed to load activities</div>';
+            })
+            .finally(() => {
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
+            });
+    } catch (err) {
+        console.error('Unexpected error:', err);
+    }
+}
+
+// Safe initialization
+document.addEventListener('DOMContentLoaded', function() {
+    // Only run if on a page with activities
+    if (document.getElementById('activities-container')) {
+        loadActivities();
+        
+        // Refresh button (if exists)
+        const refreshBtn = document.getElementById('refresh-activities');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', loadActivities);
+        }
+    }
+});
+
+function refreshActivities() {
+    loadActivities();
+    showNotification('Activities refreshed');
+}
+
+// Load activities when page loads
+document.addEventListener('DOMContentLoaded', loadActivities);
+</script>
 </body>
 </html>
