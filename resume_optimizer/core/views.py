@@ -380,25 +380,29 @@ from django.http import JsonResponse
 from django.core.serializers.json import DjangoJSONEncoder
 from .models import Activity
 import json
-
+# views.py
 @login_required
 def user_activities(request):
     activities = Activity.objects.filter(user=request.user).order_by('-timestamp')[:10]
     
     activity_data = []
     for activity in activities:
+        # Clean up details for display
+        details = activity.details
+        if activity.activity_type == 'RESUME_ANALYSIS':
+            details = "Resume analysis completed"
+        elif activity.activity_type == 'CHALLENGES_GENERATED':
+            details = f"Generated {activity.details.split('Count: ')[1]} challenges"
+        
         activity_data.append({
             'title': activity.title,
-            'details': activity.details,
+            'details': details,
             'icon_path': activity.get_icon_path(),
             'time_ago': activity.get_time_ago(),
+            'type': activity.activity_type,
         })
     
-    return JsonResponse(
-        {'activities': activity_data},
-        encoder=DjangoJSONEncoder,
-        safe=False
-    )
+    return JsonResponse({'activities': activity_data}, safe=False)
 @login_required
 def test_user(request):
     from django.http import JsonResponse

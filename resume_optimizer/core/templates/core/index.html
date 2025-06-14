@@ -14,6 +14,97 @@
       font-family: 'Inter', sans-serif;
       color: #f8fafc;
     }
+       
+    #activities-container {
+        max-height: 500px;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+
+    .activity-item {
+        display: flex;
+        gap: 15px;
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+        align-items: flex-start;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-icon {
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #f0f4ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .activity-icon svg {
+        width: 18px;
+        height: 18px;
+        fill: #4a6baf;
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .activity-header strong {
+        font-weight: 600;
+        color: #d6b7b7;
+    }
+
+    .activity-header small {
+        color: #888;
+        font-size: 0.85em;
+    }
+
+    .activity-summary {
+        margin: 0;
+        color: #555;
+        font-size: 0.95em;
+        line-height: 1.4;
+    }
+
+    /* Activity type specific colors */
+    .activity-item.resume_upload .activity-icon {
+        background: #e6f7ff;
+    }
+    .activity-item.resume_upload .activity-icon svg {
+        fill: #1890ff;
+    }
+
+    .activity-item.challenges_generated .activity-icon {
+        background: #f6ffed;
+    }
+    .activity-item.challenges_generated .activity-icon svg {
+        fill: #52c41a;
+    }
+
+    .activity-item.resume_analysis .activity-icon {
+        background: #fff7e6;
+    }
+    .activity-item.resume_analysis .activity-icon svg {
+        fill: #fa8c16;
+    }
+
+    .activity-error {
+        color: #f5222d;
+        padding: 10px;
+        text-align: center;
+    }
 
     .card {
       background: rgba(255, 255, 255, 0.1);
@@ -485,71 +576,33 @@
 
 // Fetch and display real activities
 function loadActivities() {
-    try {
-        const container = document.getElementById('activities-container');
-        const loadingIndicator = document.getElementById('loading-indicator');
-        
-        // Exit if no container
-        if (!container) return;
-        
-        // Show loading state
-        if (loadingIndicator) loadingIndicator.style.display = 'block';
-        container.innerHTML = '';
+    const container = document.getElementById('activities-container');
+    if (!container) return;
 
-        fetch('/api/user/activities/')
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                return response.json();
-            })
-            .then(data => {
-                if (!data.activities || data.activities.length === 0) {
-                    container.innerHTML = '<div class="no-activities">No recent activities</div>';
-                    return;
-                }
-
-                data.activities.forEach(activity => {
-                    const activityEl = document.createElement('div');
-                    activityEl.className = 'activity-item';
-                    activityEl.innerHTML = `
-                        <div class="activity-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24">
-                                <path d="${activity.icon_path}"/>
-                            </svg>
-                        </div>
-                        <div class="activity-content">
+    fetch('/api/user/activities/')
+        .then(response => response.json())
+        .then(data => {
+            container.innerHTML = data.activities.map(activity => `
+                <div class="activity-item ${activity.type.toLowerCase()}">
+                    <div class="activity-icon">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="${activity.icon_path}"/>
+                        </svg>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-header">
                             <strong>${activity.title}</strong>
                             <small>${activity.time_ago}</small>
-                            <p>${activity.details}</p>
                         </div>
-                    `;
-                    container.appendChild(activityEl);
-                });
-            })
-            .catch(error => {
-                console.error('Activity load error:', error);
-                container.innerHTML = '<div class="error-message">Failed to load activities</div>';
-            })
-            .finally(() => {
-                if (loadingIndicator) loadingIndicator.style.display = 'none';
-            });
-    } catch (err) {
-        console.error('Unexpected error:', err);
-    }
+                        <p class="activity-summary">${activity.details}</p>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            container.innerHTML = '<div class="activity-error">Failed to load activities</div>';
+        });
 }
-
-// Safe initialization
-document.addEventListener('DOMContentLoaded', function() {
-    // Only run if on a page with activities
-    if (document.getElementById('activities-container')) {
-        loadActivities();
-        
-        // Refresh button (if exists)
-        const refreshBtn = document.getElementById('refresh-activities');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', loadActivities);
-        }
-    }
-});
 
 function refreshActivities() {
     loadActivities();

@@ -86,18 +86,15 @@ class Activity(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.get_activity_type_display()}: {self.title}"
     
+    # models.py
     def get_icon_path(self):
-        """Returns SVG path based on activity type"""
         icon_map = {
             'RESUME_UPLOAD': 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
-            'CHALLENGE_COMPLETE': 'M5 13l4 4L19 7',
-            'SKILL_IMPROVE': 'M13 10V3L4 14h7v7l9-11h-7z',
-            'PROJECT_START': 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
             'RESUME_ANALYSIS': 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
             'CHALLENGES_GENERATED': 'M13 10V3L4 14h7v7l9-11h-7z',
+            'NO_CHALLENGES': 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
         }
         return icon_map.get(self.activity_type, 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z')
-    
     def get_time_ago(self):
         """Returns human-readable time difference"""
         from django.utils import timezone
