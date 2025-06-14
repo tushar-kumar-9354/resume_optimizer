@@ -381,18 +381,35 @@ from django.core.serializers.json import DjangoJSONEncoder
 from .models import Activity
 import json
 # views.py
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from .models import Activity
+
 @login_required
 def user_activities(request):
     activities = Activity.objects.filter(user=request.user).order_by('-timestamp')[:10]
     
     activity_data = []
     for activity in activities:
-        # Clean up details for display
         details = activity.details
         if activity.activity_type == 'RESUME_ANALYSIS':
             details = "Resume analysis completed"
         elif activity.activity_type == 'CHALLENGES_GENERATED':
-            details = f"Generated {activity.details.split('Count: ')[1]} challenges"
+            details = f"Generated {activity.details.split('Count: ')[1]} challenges" if 'Count: ' in activity.details else "Generated new challenges"
+        elif activity.activity_type == 'NO_CHALLENGES':
+            details = "No new challenges generated from resume analysis"
+        elif activity.activity_type == 'RESUME_UPLOAD_ATTEMPT':
+            details = "Duplicate resume upload attempt detected"
+        elif activity.activity_type == 'RESUME_UPLOAD_ERROR':
+            details = "Error processing resume upload"
+        elif activity.activity_type == 'CHALLENGE_GENERATION_ERROR':
+            details = "Error generating challenges from resume analysis"
+        elif activity.activity_type == 'PROJECT_START':
+            details = "Project started based on resume analysis"
+        elif activity.activity_type == 'SKILL_IMPROVE':
+            details = "Skill improved based on resume analysis"
+        elif activity.activity_type == 'PROJECT_UPDATE':
+            details = "Project updated with new challenges or steps"
         
         activity_data.append({
             'title': activity.title,
@@ -402,10 +419,10 @@ def user_activities(request):
             'type': activity.activity_type,
         })
     
-    return JsonResponse({'activities': activity_data}, safe=False)
+    return JsonResponse({'activities': activity_data})
+
 @login_required
 def test_user(request):
-    from django.http import JsonResponse
     return JsonResponse({
         'username': request.user.username,
         'email': request.user.email,

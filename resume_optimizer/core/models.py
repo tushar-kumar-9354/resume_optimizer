@@ -58,6 +58,7 @@ class ProjectStep(models.Model):
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+
 class Activity(models.Model):
     ACTIVITY_TYPES = [
         ('CHALLENGE_COMPLETE', 'Challenge Completed'),
@@ -67,8 +68,8 @@ class Activity(models.Model):
         ('RESUME_UPLOAD', 'Resume Uploaded'),
         ('RESUME_UPLOAD_ATTEMPT', 'Duplicate Resume Attempt'),
         ('RESUME_UPLOAD_ERROR', 'Resume Upload Error'),
-        ('RESUME_ANALYSIS', 'Resume Analyzed'),  # Fixed typo
-        ('CHALLENGES_GENERATED', 'Challenges Generated'),  # Fixed typo
+        ('RESUME_ANALYSIS', 'Resume Analyzed'),
+        ('CHALLENGES_GENERATED', 'Challenges Generated'),
         ('NO_CHALLENGES', 'No Challenges Generated'),
         ('CHALLENGE_GENERATION_ERROR', 'Challenge Generation Error')
     ]
@@ -86,18 +87,24 @@ class Activity(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.get_activity_type_display()}: {self.title}"
     
-    # models.py
     def get_icon_path(self):
         icon_map = {
             'RESUME_UPLOAD': 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
             'RESUME_ANALYSIS': 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
             'CHALLENGES_GENERATED': 'M13 10V3L4 14h7v7l9-11h-7z',
             'NO_CHALLENGES': 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+            'CHALLENGE_COMPLETE': 'M5 13l4 4L19 7',
+            'PROJECT_START': 'M12 4v16m8-8H4',
+            'SKILL_IMPROVE': 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+            'PROJECT_UPDATE': 'M3 10h2a1 1 0 011 1v7a1 1 0 01-1 1H3m0-9V5a2 2 0 012-2h14a2 2 0 012 2v5m-2 4h2a1 1 0 011 1v7a1 1 0 01-1 1h-2',
+            'RESUME_UPLOAD_ATTEMPT': 'M12 16v-8m0 0l-4 4m4-4l4 4',
+            'RESUME_UPLOAD_ERROR': 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+            'CHALLENGE_GENERATION_ERROR': 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
         }
         return icon_map.get(self.activity_type, 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z')
+    
     def get_time_ago(self):
         """Returns human-readable time difference"""
-        from django.utils import timezone
         diff = timezone.now() - self.timestamp
         
         if diff.days > 0:
