@@ -97,3 +97,5 @@ Desktop.ini
 # PyCharm
 .idea/
 *.iml
+
+/staticfiles/

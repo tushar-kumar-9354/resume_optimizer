@@ -50,7 +50,7 @@ Resume:
 \"\"\"{resume_text}\"\"\"
 """
     try:
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         response = model.generate_content(prompt)
         content = response.text.strip()
         print("Gemini ATS Analysis Response:", content)
@@ -76,7 +76,7 @@ Resume:
 
 
 def classify_skill_level_with_gemini(skill, project_descriptions):
-    model = genai.GenerativeModel("gemini-2.5-flash")
+    model = genai.GenerativeModel("gemini-2.0-flash")
     prompt = f"""
 You are given a list of project step descriptions:
 
@@ -284,7 +284,7 @@ from core.models import ProjectStep
 from core.utils import generate_code_for_step
 import google.generativeai as genai
 
-model = genai.GenerativeModel("models/gemini-2.5-flash")
+model = genai.GenerativeModel("models/gemini-2.0-flash")
 
 @csrf_exempt
 @login_required
