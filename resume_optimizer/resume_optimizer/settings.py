@@ -18,7 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 import sys
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'resume_optimizer.onrender.com']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'resume_optimizer.onrender.com','resume-optimizer-fcod.onrender.com']
 
 
 # Quick-start development settings - unsuitable for production
