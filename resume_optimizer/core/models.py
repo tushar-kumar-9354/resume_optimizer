@@ -27,6 +27,9 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     resume = models.FileField(upload_to='resumes/', unique=False)  # Allows duplicates
     skills = models.ManyToManyField(Skill)
+    ats_score = models.IntegerField(null=True, blank=True)  # New
+    top_skills = models.CharField(max_length=500, null=True, blank=True)  # New
+
     
     def __str__(self):
         return self.user.username

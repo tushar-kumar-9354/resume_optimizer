@@ -4,9 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.contrib import messages
+from urllib3 import request
 from .forms import ResumeUploadForm
 from .models import UserProfile, Challenge
 from .utils import extract_resume_text, generate_challenges_from_feedback, analyze_resume, log_activity
+from django.db.models import Q
 
 def register(request):
     if request.method == 'POST':
@@ -18,7 +20,89 @@ def register(request):
     else:
         form = UserCreationForm()
     return render(request, 'core/register.html', {'form': form})
-@login_required
+from django.shortcuts import redirect, render
+from django.contrib import messages
+from .forms import ResumeUploadForm
+from .models import UserProfile, Activity
+from .utils import extract_resume_text, analyze_resume, extract_skills
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .forms import ResumeUploadForm
+from .models import UserProfile, Activity
+from .utils import extract_resume_text, generate_challenges_from_feedback
+import re
+import google.generativeai as genai  # Gemini SDK
+
+# Set your Gemini API Key (ideally from env variable)
+GEMINI_API_KEY = "AIzaSyCH3rhgrqr3Swh3wwj8POCZiB66rTh86r4"
+
+def get_ats_score_from_gemini(resume_text):
+    prompt = f"""
+You are an ATS (Applicant Tracking System) simulator.
+
+Given the following resume text, give an overall ATS score (out of 100) based on clarity, keyword presence, formatting, and technical relevance. Also extract top 5 technical skills clearly.
+
+Format your response like this:
+ATS Score: <number>
+Skills: <comma-separated list of top 5 skills>
+
+Resume:
+\"\"\"{resume_text}\"\"\"
+"""
+    try:
+        model = genai.GenerativeModel("gemini-2.5-flash")
+        response = model.generate_content(prompt)
+        content = response.text.strip()
+        print("Gemini ATS Analysis Response:", content)
+
+        # Parse response
+        ats_score = 0
+        skills = []
+
+        match = re.search(r'ATS Score:\s*(\d+)', content)
+        if match:
+            ats_score = int(match.group(1))
+
+        skills_match = re.search(r'Skills:\s*(.*)', content)
+        if skills_match:
+            skills = [s.strip() for s in skills_match.group(1).split(',')[:5]]
+
+        return ats_score, skills
+
+    except Exception as e:
+        print("Gemini ATS error:", str(e))
+        return 0, []  # fallback
+
+
+
+def classify_skill_level_with_gemini(skill, project_descriptions):
+    model = genai.GenerativeModel("gemini-2.5-flash")
+    prompt = f"""
+You are given a list of project step descriptions:
+
+{project_descriptions}
+
+From this list:
+1. Extract the technical skills or technologies used (e.g., Python, Django, PostgreSQL, Generative AI, etc.).
+2. For each extracted skill:
+    - Analyze how frequently it is mentioned or used.
+    - Analyze the complexity of its usage based on the project context.
+3. Based on this analysis, assign a skill level for each skill:
+    - Beginner: Basic or few usages.
+    - Intermediate: Moderate frequency or mid-level usage.
+    - Advanced: High frequency and complex or critical usage in projects.
+
+Return your output in this format (as JSON):
+{{
+  "Python": "Intermediate",
+  "Django": "Beginner",
+  ...
+}}
+"""
+    print("Gemini Skill Classification Prompt:", prompt)
+    response = model.generate_content(prompt)
+    return response.text.strip()
+
 def upload_resume(request):
     if request.method == 'POST':
         form = ResumeUploadForm(request.POST, request.FILES)
@@ -26,61 +110,64 @@ def upload_resume(request):
             try:
                 user_profile, created = UserProfile.objects.get_or_create(user=request.user)
                 new_resume = form.cleaned_data['resume']
-                
-                # Save the file
+
+                # Save resume file
                 user_profile.resume = new_resume
                 user_profile.save()
-                
-                # Process the file
+
+                # Extract resume text
                 uploaded_file = request.FILES['resume']
                 uploaded_file.seek(0)
-                
-                # Extract text
                 resume_text = extract_resume_text(uploaded_file)
                 user_profile.resume_text = resume_text[:100000]
                 user_profile.save()
-                
-                # Log activity - using exact type from model
+
+                # Log upload
                 Activity.objects.create(
                     user=request.user,
-                    activity_type='RESUME_UPLOAD',  # Must match exactly
+                    activity_type='RESUME_UPLOAD',
                     title='Uploaded new resume',
                     details=f"Filename: {new_resume.name[:200]}"
                 )
-                
-                # Analyze resume
-                feedback = analyze_resume(resume_text)
-                
-                # Log analysis - using exact type from model
+
+                # 🎯 GEMINI: Get ATS score and top skills
+                ats_score, top_skills = get_ats_score_from_gemini(resume_text)
+                user_profile.ats_score = ats_score
+                user_profile.top_skills = ', '.join(top_skills)
+                user_profile.save()
+
                 Activity.objects.create(
                     user=request.user,
-                    activity_type='RESUME_ANALYSIS',  # Must match exactly
-                    title='Resume analysis completed',
-                    details=f"Analysis summary: {feedback[:500]}"
+                    activity_type='RESUME_ANALYSIS',
+                    title='Gemini resume analysis completed',
+                    details=f"Score: {ats_score}, Skills: {', '.join(top_skills)}"
                 )
-                
-                # Generate challenges
+
+                # Optionally generate challenges
+                feedback = analyze_resume(resume_text)
                 generated_count = generate_challenges_from_feedback(request.user, feedback)
-                
+
+                print(f"Generated {generated_count} challenges from resume analysis.")
+                if generated_count == 0:
+                    Activity.objects.create(
+                        user=request.user,
+                        activity_type='CHALLENGE_GENERATION_ERROR',
+                        title='No challenges generated from resume analysis',
+                        details="Resume analysis shows all skills are already demonstrated in your projects."
+                    )
+
                 if generated_count > 0:
                     Activity.objects.create(
                         user=request.user,
-                        activity_type='CHALLENGES_GENERATED',  # Must match exactly
+                        activity_type='CHALLENGES_GENERATED',
                         title='Generated new challenges',
                         details=f"Count: {generated_count}"
                     )
-                else:
-                    Activity.objects.create(
-                        user=request.user,
-                        activity_type='NO_CHALLENGES',
-                        title='No new challenges',
-                        details="Resume analysis didn't generate new challenges"
-                    )
-                
+
+
                 return redirect('/challenges/')
-                
+
             except Exception as e:
-                # Log error activity
                 Activity.objects.create(
                     user=request.user,
                     activity_type='RESUME_UPLOAD_ERROR',
@@ -89,14 +176,10 @@ def upload_resume(request):
                 )
                 messages.error(request, f"Error processing resume: {str(e)}")
                 return redirect('upload_resume')
-    
-    form = ResumeUploadForm()
-    print("User ID:", request.user.id)
-    from django.db import connection
-    for query in connection.queries:
-        print(query)
 
+    form = ResumeUploadForm()
     return render(request, 'core/upload_resume.html', {'form': form})
+
 @login_required
 def challenge_list(request):
     challenges = Challenge.objects.filter(user=request.user)
@@ -124,7 +207,6 @@ def challenge_detail(request, pk):
         'mcqs': challenge.mcq_questions,
        
     })
-    import json
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from .utils import (
@@ -202,7 +284,7 @@ from core.models import ProjectStep
 from core.utils import generate_code_for_step
 import google.generativeai as genai
 
-model = genai.GenerativeModel("models/gemini-1.5-flash")
+model = genai.GenerativeModel("models/gemini-2.5-flash")
 
 @csrf_exempt
 @login_required
@@ -279,9 +361,10 @@ INSTRUCTIONS:
             try:
                 resp = model.generate_content(prompt)
                 ai_response = resp.text.strip()
+                print("Gemini AI Response:", ai_response)
             except Exception:
                 ai_response = "⚠️ Gemini failed to respond – please try again."
-
+    print("Gemini AI Response:", ai_response)
     return render(request, "core/week_code.html", {
         "project_title": project_title,
         "step_description": step_description,
@@ -319,7 +402,113 @@ def project_dashboard_view(request):
         "steps": steps,
         "percent_complete": percent_complete,
     })
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from .models import UserProfile, Challenge, ProjectStep
+from .utils import extract_resume_text, analyze_resume, extract_skills
+import re
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from .models import UserProfile, ProjectStep, Challenge
+from .utils import extract_skills  # still used for fallback classification
+import re
+
 @login_required
+def dashboard_data(request):
+    try:
+        # 1. Get user profile
+        user_profile = UserProfile.objects.filter(user=request.user).first()
+        print(f"User Profile: {user_profile}")
+        
+        # 2. Get active projects
+        project_steps = ProjectStep.objects.filter(
+            user=request.user,
+            status__in=['PENDING', 'IN_PROGRESS']
+        ).order_by('project_title', '-week')
+        print(f"Project Steps: (len={len(project_steps)})")
+
+        projects = []
+        seen_titles = set()
+        for step in project_steps:
+            if step.project_title not in seen_titles:
+                projects.append({
+                    'project_title': step.project_title,
+                    'current_week': step.week
+                })
+                seen_titles.add(step.project_title)
+        
+        # 1. Count active projects
+        active_project_titles = ProjectStep.objects.filter(
+            user=request.user,
+            status__in=['PENDING', 'IN_PROGRESS']
+        ).values_list('project_title', flat=True).distinct()
+
+        print(f"Active Projects: {active_project_titles}")
+        # 3. Count completed challenges
+        completed_challenges = Challenge.objects.filter(
+            user=request.user,
+            status='PASSED'
+        ).count()
+
+        print(f"Completed Challenges: {completed_challenges}")
+
+        # 4. Boosted ATS Score
+        ats_score = user_profile.ats_score if user_profile else 0
+        print(f"ATS Score: {ats_score}")
+
+                # 5. Skill Level Classification
+        skill_aliases = {
+            'Python': ['python'],
+            'Generative AI': ['generative ai', 'llm', 'prompt engineering', 'gemini', 'chatgpt'],
+            'Django': ['django', 'views', 'models', 'orm', 'template'],
+            'PostgreSQL': ['postgresql', 'sql', 'database'],
+            'Data Structures & Algorithms': ['dsa', 'data structure', 'linked list', 'binary tree', 'sorting'],
+        }
+
+        skills = []
+        if user_profile and user_profile.top_skills:
+            skill_names = [s.strip() for s in user_profile.top_skills.split(',') if s.strip()]
+
+            for skill in skill_names[:5]:
+                aliases = skill_aliases.get(skill, [skill])
+                keyword_filter = Q()
+                for alias in aliases:
+                    keyword_filter |= Q(step_description__icontains=alias)
+
+                matching_steps = ProjectStep.objects.filter(user=request.user).filter(keyword_filter)
+                project_count = matching_steps.count()
+
+                # Updated classification logic
+                if project_count >= 4:
+                    level = 'Advanced'
+                elif project_count >= 2:
+                    level = 'Intermediate'
+                else:
+                    level = 'Beginner'
+
+                skills.append({
+                    'name': skill,
+                    'level': level,
+                    'project_count': project_count,
+                    'is_complex': project_count >= 2  # More granular
+                })
+
+
+
+        # Return response
+        return JsonResponse({
+            'projects': projects,
+            'completed_challenges': completed_challenges,
+            'ats_score': ats_score,
+            'skills': skills,
+            "active_projects": len(list(active_project_titles)),
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'error': f'Failed to load dashboard data: {str(e)}'
+        }, status=500)
+
 def regenerate_step_code(request, step_id):
     step = get_object_or_404(ProjectStep, id=step_id, user=request.user)
     skills = request.session.get("skills", [])

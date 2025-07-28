@@ -18,4 +18,5 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(next_page='index'), name='logout'),
     path('api/user/activities/', views.user_activities, name='user_activities'),
     path('test-user/', views.test_user, name='test_user'),
+    path('dashboard-data/', views.dashboard_data, name='dashboard_data'),
 ]

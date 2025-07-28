@@ -7,8 +7,8 @@ from django.conf import settings
 import json
 
 # Configure Gemini API
-genai.configure(api_key="AIzaSyDlgaheySCnhuZlUF8uUUr7pKihdmcdWKM")
-model = genai.GenerativeModel("models/gemini-2.0-flash")
+genai.configure(api_key="AIzaSyCH3rhgrqr3Swh3wwj8POCZiB66rTh86r4")
+model = genai.GenerativeModel("models/gemini-2.5-flash")
 
 def extract_resume_text(file):
     doc = fitz.open(stream=file.read(), filetype="pdf")
@@ -133,26 +133,41 @@ def analyze_resume(resume_text):
     return feedback
 def generate_challenges_from_feedback(user, feedback_list):
     created_count = 0
+    print("Starting Challenge Generation...")
+
+    if not feedback_list:
+        print("No feedback provided.")
+        return 0
+
     for feedback in feedback_list:
-        skill_name = feedback["skill"].title()
+        skill_name = feedback["skill"].strip().lower().title()
         reason = feedback["reason"]
         description = f"Create a project demonstrating your {skill_name} skills. Reason: {reason}"
+
+        print(f"\nProcessing skill: {skill_name}")
+        print("Description:", description)
 
         skill_obj, _ = Skill.objects.get_or_create(name=skill_name)
 
         if Challenge.objects.filter(user=user, skill=skill_obj, description=description).exists():
+            print("Challenge already exists. Skipping...")
             continue
 
-        # Create with all MCQ questions from the feedback
-        Challenge.objects.create(
-            user=user,
-            skill=skill_obj,
-            reason=reason,
-            description=description,
-            mcq_questions=feedback.get("mcqs", []),  # Use all MCQs from the response
-            status="PENDING"
-        )
-        created_count += 1
+        try:
+            Challenge.objects.create(
+                user=user,
+                skill=skill_obj,
+                reason=reason,
+                description=description,
+                mcq_questions=feedback.get("mcqs", []),
+                status="PENDING"
+            )
+            created_count += 1
+            print("Challenge created successfully.")
+        except Exception as e:
+            print("Error creating challenge:", e)
+
+    print(f"Total challenges created: {created_count}")
     return created_count
 
 
@@ -310,4 +325,4 @@ def log_activity(user, activity_type, title, details=""):
     
     # Keep only the last 20 activities per user
     activities_to_delete = Activity.objects.filter(user=user).order_by('-timestamp')[20:].iterator()
-   
+    
