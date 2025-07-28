@@ -109,7 +109,8 @@
                 });
 
                 if (response.ok) {
-                    window.location.href = 'http://127.0.0.1:8000/challenges/';
+                    window.location.href = '/challenges/';
+
                 } else {
                     errorMessage.textContent = 'Error uploading file. Please try again.';
                     errorMessage.style.display = 'block';
