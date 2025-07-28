@@ -34,7 +34,7 @@ import re
 import google.generativeai as genai  # Gemini SDK
 
 # Set your Gemini API Key (ideally from env variable)
-GEMINI_API_KEY = "AIzaSyCH3rhgrqr3Swh3wwj8POCZiB66rTh86r4"
+GEMINI_API_KEY = "AIzaSyChEo4-UNUDHLS51mZUayZleaQFyg1uziw"
 
 def get_ats_score_from_gemini(resume_text):
     prompt = f"""
@@ -50,7 +50,7 @@ Resume:
 \"\"\"{resume_text}\"\"\"
 """
     try:
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        model = genai.GenerativeModel("gemini-2.0-flash")
         response = model.generate_content(prompt)
         content = response.text.strip()
         print("Gemini ATS Analysis Response:", content)
