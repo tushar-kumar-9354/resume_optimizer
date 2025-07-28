@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from core import views as core_views
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),

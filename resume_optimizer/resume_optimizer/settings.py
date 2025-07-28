@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'whitenoise.runserver_nostatic', 
     'core',  # Your core app for resume optimization
 ]
 DATABASES = {
@@ -52,6 +53,21 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+
+STATIC_URL = '/static/'
+
+# Path where collectstatic will gather all static files
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Additional locations of static files (e.g., in your app's 'static/' folder)
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+# For WhiteNoise (use this only in production)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -80,7 +96,6 @@ TEMPLATES = [
     },
 ]
 CSRF_TRUSTED_ORIGINS = [
-    'https://resume_optimizer.onrender.com',
     'https://resume-optimizer-fcod.onrender.com',
 ]
 LOGIN_URL = 'login'
@@ -141,18 +156,6 @@ from pathlib import Path
 
 # Project base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'
-
-# Path where collectstatic will gather all static files
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# Additional locations of static files (e.g., in your app's 'static/' folder)
-
-
-# For WhiteNoise (use this only in production)
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # Media files (if you have any uploads)
