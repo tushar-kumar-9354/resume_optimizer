@@ -81,6 +81,7 @@ TEMPLATES = [
 ]
 CSRF_TRUSTED_ORIGINS = [
     'https://resume_optimizer.onrender.com',
+    'https://resume-optimizer-fcod.onrender.com',
 ]
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'upload_resume'
