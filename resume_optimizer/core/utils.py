@@ -7,7 +7,7 @@ from django.conf import settings
 import json
 
 # Configure Gemini API
-genai.configure(api_key="AIzaSyChEo4-UNUDHLS51mZUayZleaQFyg1uziw")
+genai.configure(api_key="AIzaSyANvzM4WfzqA2yhAwOO224Nrgh4a76oyD0")
 model = genai.GenerativeModel("models/gemini-2.0-flash")
 
 def extract_resume_text(file):
