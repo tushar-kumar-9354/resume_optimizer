@@ -34,7 +34,7 @@ import re
 import google.generativeai as genai  # Gemini SDK
 
 # Set your Gemini API Key (ideally from env variable)
-GEMINI_API_KEY = "AIzaSyANvzM4WfzqA2yhAwOO224Nrgh4a76oyD0"
+GEMINI_API_KEY = "AIzaSyD5RvNB3W919CigqiyS-qvEw_6wgaTh6xk"
 
 def get_ats_score_from_gemini(resume_text):
     prompt = f"""
@@ -50,7 +50,7 @@ Resume:
 \"\"\"{resume_text}\"\"\"
 """
     try:
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content(prompt)
         content = response.text.strip()
         print("Gemini ATS Analysis Response:", content)
@@ -76,7 +76,7 @@ Resume:
 
 
 def classify_skill_level_with_gemini(skill, project_descriptions):
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    model = genai.GenerativeModel("gemini-1.5-flash")
     prompt = f"""
 You are given a list of project step descriptions:
 
@@ -174,6 +174,7 @@ def upload_resume(request):
                     title='Resume processing failed',
                     details=f"Error: {str(e)}"
                 )
+                print("Resume upload error:", str(e))
                 messages.error(request, f"Error processing resume: {str(e)}")
                 return redirect('upload_resume')
 
@@ -363,7 +364,7 @@ INSTRUCTIONS:
                 ai_response = resp.text.strip()
                 print("Gemini AI Response:", ai_response)
             except Exception:
-                ai_response = "⚠️ Gemini failed to respond – please try again."
+                ai_response = "⚠️ Gemini failed to respond - please try again."
     print("Gemini AI Response:", ai_response)
     return render(request, "core/week_code.html", {
         "project_title": project_title,

@@ -7,8 +7,8 @@ from django.conf import settings
 import json
 
 # Configure Gemini API
-genai.configure(api_key="AIzaSyANvzM4WfzqA2yhAwOO224Nrgh4a76oyD0")
-model = genai.GenerativeModel("models/gemini-2.0-flash")
+genai.configure(api_key="AIzaSyD5RvNB3W919CigqiyS-qvEw_6wgaTh6xk")
+model = genai.GenerativeModel("gemini-2.0-flash")
 
 def extract_resume_text(file):
     doc = fitz.open(stream=file.read(), filetype="pdf")
@@ -50,7 +50,7 @@ The user listed "{skill}" in their resume but has not demonstrated it in project
 
 Generate a JSON response ONLY, without explanations.
 
-The JSON should include:
+The JSON should include exactly:
 - 2 fill-in-the-blank questions (no options — user types the answer)
 - 2 multiple-choice questions (MCQ with 4 options)
 
@@ -63,9 +63,8 @@ Use this format exactly:
       "question": "Fill in the blank question 1 about {skill}",
       "answer": "Correct answer"
     }},
-    ...
     {{
-      "question": "Fill in the blank question 5 about {skill}",
+      "question": "Fill in the blank question 2 about {skill}",
       "answer": "Correct answer"
     }}
   ],
@@ -75,9 +74,8 @@ Use this format exactly:
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "answer": "Correct option text"
     }},
-    ...
     {{
-      "question": "MCQ question 5 about {skill}",
+      "question": "MCQ question 2 about {skill}",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "answer": "Correct option text"
     }}
@@ -91,6 +89,7 @@ Use this format exactly:
         print("Gemini output error:", e)
         return None
 
+
 def clean_gemini_json(gemini_output):
     """
     Remove markdown formatting like ```json ... ``` if present.
@@ -98,8 +97,10 @@ def clean_gemini_json(gemini_output):
     return re.sub(r"^```json|```$", "", gemini_output.strip(), flags=re.MULTILINE).strip()
 
 def analyze_resume(resume_text):
-    skills = extract_skills(resume_text)
-    print("Extracted skills:", skills)
+    all_skills = extract_skills(resume_text)
+    skills = all_skills[1:6]  # ✅ Limit to max 4 skills
+    print("Extracted skills (limited to 4):", skills)
+
     projects = extract_projects(resume_text)
     experiences = extract_experience(resume_text)
 
@@ -118,12 +119,16 @@ def analyze_resume(resume_text):
                 try:
                     cleaned_output = clean_gemini_json(gemini_output)
                     structured = json.loads(cleaned_output)
-                    
-                    # Fix: Properly handle the mcqs array from Gemini
+
+                    # ✅ Extract safely and trim to exactly 2 each
+                    fill_blanks = structured.get("fill_in_the_blanks", [])[:2]
+                    mcqs = structured.get("mcqs", [])[:2]
+
                     feedback.append({
                         "skill": skill,
                         "reason": reason,
-                        "mcqs": structured.get("mcqs", [])  # Get all MCQs from the response
+                        "fill_in_the_blanks": fill_blanks,
+                        "mcqs": mcqs
                     })
                 except json.JSONDecodeError:
                     print(f"⚠️ Invalid JSON for skill {skill}:\n{gemini_output}")
@@ -131,6 +136,7 @@ def analyze_resume(resume_text):
                     print(f"❌ Failed to parse Gemini output for {skill}:", e)
 
     return feedback
+
 def generate_challenges_from_feedback(user, feedback_list):
     created_count = 0
     print("Starting Challenge Generation...")
