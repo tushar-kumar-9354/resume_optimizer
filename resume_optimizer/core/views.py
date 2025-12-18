@@ -34,7 +34,7 @@ import re
 import google.generativeai as genai  # Gemini SDK
 
 # Set your Gemini API Key (ideally from env variable)
-GEMINI_API_KEY = "AIzaSyD5RvNB3W919CigqiyS-qvEw_6wgaTh6xk"
+GEMINI_API_KEY = "AIzaSyBAmMPwqDcnMqz5jCWCGf1k2C4CU1SEhcs"
 
 def get_ats_score_from_gemini(resume_text):
     prompt = f"""
