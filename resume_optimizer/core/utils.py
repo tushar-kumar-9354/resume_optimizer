@@ -7,8 +7,8 @@ from django.conf import settings
 import json
 
 # Configure Gemini API
-genai.configure(api_key="AIzaSyD5RvNB3W919CigqiyS-qvEw_6wgaTh6xk")
-model = genai.GenerativeModel("gemini-2.0-flash")
+genai.configure(api_key="AIzaSyCyGsGPYcpzTQSInNwRAU04vSzWdJATLOM")
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 def extract_resume_text(file):
     doc = fitz.open(stream=file.read(), filetype="pdf")
