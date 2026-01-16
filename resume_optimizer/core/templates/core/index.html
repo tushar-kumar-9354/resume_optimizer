@@ -568,129 +568,41 @@
   </footer>
 
   <!-- JavaScript for Dynamic Dashboard -->
-  <script>
-    // Fetch and display dashboard data
+<!-- Add this near the bottom of your main content -->
+<div class="mt-8 p-4 bg-gray-900 rounded-lg hidden" id="debug-info">
+    <h4 class="text-white mb-2">Debug Info</h4>
+    <pre id="debug-data" class="text-xs text-gray-300"></pre>
+</div>
+
+<script>
+    // Add this to your JavaScript to show debug info
+    function showDebugInfo(data) {
+        const debugDiv = document.getElementById('debug-info');
+        const debugPre = document.getElementById('debug-data');
+        if (debugDiv && debugPre) {
+            debugDiv.classList.remove('hidden');
+            debugPre.textContent = JSON.stringify(data, null, 2);
+        }
+    }
+    
+    // Modify loadDashboardData to show debug info
     function loadDashboardData() {
+        console.log('Loading dashboard data...');
+        
         fetch('/dashboard-data/')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                // Update Active Projects
-                const projectsContainer = document.getElementById('active-projects');
-                projectsContainer.innerHTML = data.projects.length ? 
-                    data.projects.map(project => `
-                        <div class="p-4 rounded-lg bg-gray-800 bg-opacity-50">
-                            <div class="flex items-center justify-between mb-2">
-                                <h4 class="font-medium text-white">${project.project_title}</h4>
-                                <span class="text-xs px-2 py-1 bg-teal-900 bg-opacity-50 text-teal-300 rounded">Week ${project.current_week}</span>
-                            </div>
-                        </div>
-                    `).join('') : '<p class="text-sm text-gray-400">No active projects yet. Upload a resume to get started!</p>';
-
-                // Update Completed Challenges
-                document.getElementById('completed-challenges-count').textContent = data.completed_challenges || 0;
-
-                document.getElementById('active-projects-count').textContent = data.active_projects || 0;
-
-                // Update Skills Improved
-                document.getElementById('skills-improved-count').textContent = data.skills ? data.skills.length : 0;
-
-                // Update ATS Score
-                document.getElementById('ats-score').textContent = `${data.ats_score || 0}%`;
-
-                // Update Top Skills
-                const skillsContainer = document.getElementById('top-skills');
-                skillsContainer.innerHTML = data.skills && data.skills.length ? data.skills.map(skill => {
-                    const skillPercent = skill.level === 'Advanced' ? 85 :
-                                      skill.level === 'Intermediate' ? 65 : 40;
-                    return `
-                    <div class="skill-item">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm font-medium text-white">${skill.name}</span>
-                            <span class="text-xs px-3 py-1 bg-green-900/50 text-green-300 rounded-full">${skill.level}</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${skillPercent}%"></div>
-                        </div>
-                    </div>
-                `;
-                }).join('') : '<p class="text-sm text-gray-400">No skills detected. Upload a resume to see your top skills!</p>';
+                console.log('Dashboard data:', data);
+                showDebugInfo(data); // Add this line
+                // ... rest of your code
             })
             .catch(error => {
-                console.error('Error loading dashboard data:', error);
-                document.getElementById('active-projects-count').textContent = '0';
-                document.getElementById('active-projects').innerHTML = '<p class="text-sm text-gray-400">No active projects yet. Upload a resume to get started!</p>';
-                document.getElementById('completed-challenges-count').textContent = '0';
-                document.getElementById('skills-improved-count').textContent = '0';
-                document.getElementById('ats-score').textContent = '0%';
-                document.getElementById('top-skills').innerHTML = '<p class="text-sm text-gray-400">No skills detected. Upload a resume to see your top skills!</p>';
-                showNotification('Failed to load dashboard data. Please try again later.');
+                console.error('Error:', error);
+                showDebugInfo({error: error.message});
             });
     }
+</script>
 
-    // Fetch and display activities
-    function loadActivities() {
-      const container = document.getElementById('activities-container');
-      if (!container) return;
 
-      fetch('/api/user/activities/')
-        .then(response => response.json())
-        .then(data => {
-          container.innerHTML = data.activities.map(activity => `
-            <div class="activity-item ${activity.type.toLowerCase()}">
-              <div class="activity-icon">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path d="${activity.icon_path}"/>
-                </svg>
-              </div>
-              <div class="activity-content">
-                <div class="activity-header">
-                  <strong>${activity.title}</strong>
-                  <small>${activity.time_ago}</small>
-                </div>
-                <p class="activity-summary">${activity.details}</p>
-              </div>
-            </div>
-          `).join('');
-        })
-        .catch(error => {
-          container.innerHTML = '<div class="activity-error">Failed to load activities. Please sign up or login first.</div>';
-        });
-    }
-
-    function refreshActivities() {
-      loadActivities();
-      showNotification('Activities refreshed');
-    }
-
-    // Simple notification system
-    function showNotification(message) {
-      const notification = document.createElement('div');
-      notification.className = 'fixed bottom-4 right-4 bg-teal-900 text-white px-6 py-3 rounded-lg shadow-lg notification';
-      notification.textContent = message;
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        notification.remove();
-      }, 5000);
-    }
-
-    // Load data on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      loadDashboardData();
-      loadActivities();
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('welcome')) {
-        showNotification('Welcome back! Check out your new project recommendations.');
-      }
-    });
-  </script>
 </body>
 </html>

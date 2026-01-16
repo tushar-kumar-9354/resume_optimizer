@@ -337,6 +337,10 @@ def generate_project_ideas_view(request):
     })
 
 # Code Generation View
+
+
+# In core/views.py, update the week_code_view function:
+
 @login_required
 def week_code_view(request):
     code_output = ""
@@ -350,18 +354,32 @@ def week_code_view(request):
         # Generate code
         if request.POST.get("action") == "code":
             skills = request.session.get("skills", [])
-            # Use Key 2 for code generation (usually heavier)
-            code_output = generate_code_for_step(project_title, step_description, skills, GEMINI_API_KEY_2)
+            if not skills:
+                skills = ["Python", "Django", "JavaScript"]  # Default skills
             
-            # Save to database
-            if code_output:
-                ProjectStep.objects.create(
-                    user=request.user,
-                    project_title=project_title,
-                    step_description=step_description,
-                    code_output=code_output[:10000],
-                    status='PENDING'
+            try:
+                # Use Key 2 for code generation
+                code_output = generate_code_for_step(
+                    project_title, 
+                    step_description, 
+                    skills, 
+                    GEMINI_API_KEY_2
                 )
+                
+                # Save to database
+                if code_output:
+                    ProjectStep.objects.create(
+                        user=request.user,
+                        project_title=project_title,
+                        step_description=step_description,
+                        code_output=code_output[:10000],
+                        status='PENDING'
+                    )
+                    print(f"✅ Saved code for: {step_description}")
+                
+            except Exception as e:
+                print(f"❌ Code generation error: {e}")
+                code_output = f"# Error generating code: {str(e)[:200]}\n\nPlease try again or use simpler instructions."
         
         # Ask Gemini
         elif request.POST.get("action") == "ask_gemini":
@@ -371,10 +389,10 @@ def week_code_view(request):
             prompt = f"""
 Code Context: {code_context[:1000]}
 Question: {user_query}
-Answer briefly:
+Answer briefly in 2-3 sentences:
 """
             try:
-                # Use Key 1 for Q&A (lighter)
+                # Use Key 1 for Q&A
                 api_key = GEMINI_API_KEY_1
                 input_tokens = count_tokens_for_text(prompt)
                 genai.configure(api_key=api_key)
@@ -386,8 +404,9 @@ Answer briefly:
                 total_tokens = input_tokens + output_tokens
                 update_token_usage('ask_gemini', input_tokens, output_tokens, total_tokens, api_key)
                 
-            except:
-                ai_response = "Gemini unavailable"
+            except Exception as e:
+                print(f"❌ Gemini Q&A error: {e}")
+                ai_response = "Gemini is currently unavailable. Please try again later."
     
     return render(request, "core/week_code.html", {
         "code_output": code_output,
@@ -414,33 +433,42 @@ def project_dashboard_view(request):
     })
 
 # Dashboard Data API
+# In core/views.py, update the dashboard_data function:
+
 @login_required
 def dashboard_data(request):
     try:
+        # 1. Get user profile
         profile = UserProfile.objects.filter(user=request.user).first()
         
-        # Active projects
-        active_projects = ProjectStep.objects.filter(
+        # 2. Active projects (projects with any PENDING or IN_PROGRESS steps)
+        active_projects_count = ProjectStep.objects.filter(
             user=request.user,
             status__in=['PENDING', 'IN_PROGRESS']
         ).values('project_title').distinct().count()
         
-        # Completed challenges
-        completed_challenges = Challenge.objects.filter(
+        # 3. Completed challenges
+        completed_challenges_count = Challenge.objects.filter(
             user=request.user,
             status='PASSED'
         ).count()
         
-        # Skills with levels
-        skills = []
+        # 4. ATS Score
+        ats_score = profile.ats_score if profile and profile.ats_score else 0
+        
+        # 5. Skills with levels (from resume analysis)
+        skills_data = []
         if profile and profile.top_skills:
-            skill_list = [s.strip() for s in profile.top_skills.split(',')[:5]]
-            for skill in skill_list:
+            skill_names = [s.strip() for s in profile.top_skills.split(',')[:5] if s.strip()]
+            
+            for skill_name in skill_names:
+                # Count how many project steps mention this skill
                 steps_count = ProjectStep.objects.filter(
                     user=request.user,
-                    step_description__icontains=skill.lower()
+                    step_description__icontains=skill_name.lower()
                 ).count()
                 
+                # Determine level based on project count
                 if steps_count >= 3:
                     level = 'Advanced'
                 elif steps_count >= 1:
@@ -448,22 +476,43 @@ def dashboard_data(request):
                 else:
                     level = 'Beginner'
                 
-                skills.append({
-                    'name': skill,
+                skills_data.append({
+                    'name': skill_name,
                     'level': level,
                     'project_count': steps_count
                 })
+        else:
+            # If no skills from resume, show placeholder
+            skills_data = [{
+                'name': 'Upload resume to analyze skills',
+                'level': 'Beginner',
+                'project_count': 0
+            }]
+        
+        # 6. Calculate skills improved (challenges completed)
+        skills_improved = Challenge.objects.filter(
+            user=request.user,
+            status='PASSED'
+        ).count()
         
         return JsonResponse({
-            'active_projects': active_projects,
-            'completed_challenges': completed_challenges,
-            'ats_score': profile.ats_score if profile else 50,
-            'skills': skills,
+            'active_projects': active_projects_count,
+            'completed_challenges': completed_challenges_count,
+            'skills_improved': skills_improved,
+            'ats_score': ats_score,
+            'skills': skills_data,
         })
         
     except Exception as e:
-        return JsonResponse({'error': str(e)[:200]}, status=500)
-
+        print(f"❌ Dashboard data error: {e}")
+        return JsonResponse({
+            'active_projects': 0,
+            'completed_challenges': 0,
+            'skills_improved': 0,
+            'ats_score': 0,
+            'skills': [],
+            'error': str(e)[:100]
+        })
 # Step Management
 @login_required
 def regenerate_step_code(request, step_id):
@@ -704,3 +753,94 @@ def debug_challenges(request):
     </ul>
     <a href="/challenges/">Go to challenges page</a>
     """)
+
+@login_required
+def test_dashboard_data(request):
+    """Manually add test data for dashboard"""
+    from .models import UserProfile, ProjectStep, Challenge
+    
+    # Get or create user profile
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    # Add test ATS score
+    profile.ats_score = 85
+    profile.top_skills = "Python, Django, JavaScript, React, SQL"
+    profile.save()
+    
+    # Add test project steps
+    ProjectStep.objects.create(
+        user=request.user,
+        project_title="Portfolio Website",
+        week=1,
+        step_description="Build a Django backend with Python",
+        status='PENDING'
+    )
+    
+    ProjectStep.objects.create(
+        user=request.user,
+        project_title="Portfolio Website",
+        week=2,
+        step_description="Create React frontend with JavaScript",
+        status='IN_PROGRESS'
+    )
+    
+    # Add test challenge
+    from .models import Skill
+    skill, _ = Skill.objects.get_or_create(name="Python")
+    Challenge.objects.create(
+        user=request.user,
+        skill=skill,
+        reason="Test challenge",
+        description="Complete Python challenge",
+        mcq_questions=[{
+            "question": "What is Python?",
+            "options": ["Snake", "Language", "Both", "Neither"],
+            "answer": "Both"
+        }],
+        status="PASSED"
+    )
+    
+    return HttpResponse("""
+    <h3>✅ Test data added!</h3>
+    <p>ATS Score: 85</p>
+    <p>Skills: Python, Django, JavaScript, React, SQL</p>
+    <p>Added 2 project steps</p>
+    <p>Added 1 completed challenge</p>
+    <br>
+    <a href="/">Go to homepage to see updated dashboard</a>
+    """)
+
+@login_required
+def debug_dashboard_json(request):
+    """Show raw dashboard JSON for debugging"""
+    from django.http import JsonResponse
+    from .models import UserProfile, ProjectStep, Challenge
+    
+    # Get user profile
+    profile = UserProfile.objects.filter(user=request.user).first()
+    
+    # Calculate data
+    data = {
+        'active_projects': ProjectStep.objects.filter(
+            user=request.user,
+            status__in=['PENDING', 'IN_PROGRESS']
+        ).values('project_title').distinct().count(),
+        
+        'completed_challenges': Challenge.objects.filter(
+            user=request.user,
+            status='PASSED'
+        ).count(),
+        
+        'skills_improved': Challenge.objects.filter(
+            user=request.user,
+            status='PASSED'
+        ).count(),
+        
+        'ats_score': profile.ats_score if profile else 0,
+        
+        'profile_exists': profile is not None,
+        'profile_ats': profile.ats_score if profile else 'No profile',
+        'profile_skills': profile.top_skills if profile else 'No skills',
+    }
+    
+    return JsonResponse(data)

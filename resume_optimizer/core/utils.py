@@ -319,26 +319,56 @@ Return as JSON array with 'week' and 'task' fields.
             {"week": 4, "task": "Testing and deployment"}
         ]
 
-def generate_code_for_step(project_title, task_description, skills, api_key=None, previous_steps=None):
-    """Generate code for a project step"""
+
+def generate_code_for_step(project_title, task_description, skills, api_key=None):
+    """Generate code for a project step with better error handling"""
+    if not skills:
+        skills = ["Python", "Programming"]
+    
     prompt = f"""
 Project: {project_title}
 Task: {task_description}
 Skills: {', '.join(skills[:3])}
 
-Provide simple code implementation with explanations.
+Provide simple code implementation with comments.
+If it's a complex task, provide a basic template or outline.
+
+Format your response clearly.
 """
     try:
         safe_api_call()
         model = get_gemini_model(api_key, "gemma-3-1b-it")
         response = model.generate_content(prompt)
         code = response.text.strip()
+        
+        if not code or len(code) < 10:
+            code = f"""# Code for: {task_description}
+
+# This is a placeholder for your implementation
+# Based on your project: {project_title}
+
+def main():
+    print("Implement your {task_description} here")
+    
+    # Add your code based on the requirements
+    # Use the skills: {', '.join(skills[:3])}
+
+if __name__ == "__main__":
+    main()
+"""
+        
         print(f"✅ Generated code for: {task_description}")
         return code
         
     except Exception as e:
         print(f"❌ Code generation failed: {e}")
-        return f"# Code for: {task_description}\n# Implement this functionality based on your project requirements."
+        # Return a simple template
+        return f"""# Code Implementation for: {task_description}
+
+# Project: {project_title}
+# Required Skills: {', '.join(skills[:3])}
+
+"""
 
 def log_activity(user, activity_type, title, details=""):
     """Log user activity"""

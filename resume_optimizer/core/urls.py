@@ -38,4 +38,6 @@ urlpatterns = [
     # Logout
     path('logout/', LogoutView.as_view(next_page='index'), name='logout'),
     path('debug-challenges/', views.debug_challenges, name='debug_challenges'),
+    path('test-dashboard/', views.test_dashboard_data, name='test_dashboard'),
+    path('debug-dashboard-json/', views.debug_dashboard_json, name='debug_dashboard_json'),
 ]
