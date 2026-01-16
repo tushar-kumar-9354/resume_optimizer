@@ -7,6 +7,18 @@ class Skill(models.Model):
     def __str__(self):
         return self.name
 
+
+# core/models.py
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+
+class Skill(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    
+    def __str__(self):
+        return self.name
+
 class Challenge(models.Model):
     STATUS_CHOICES = [
         ('PENDING', 'Pending'),
@@ -18,11 +30,18 @@ class Challenge(models.Model):
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
     description = models.TextField()
     reason = models.TextField(blank=True, null=True)
-    mcq_questions = models.JSONField(default=list)  # Contains all MCQ data including answers
+    mcq_questions = models.JSONField(default=list)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="PENDING")
+    
+    # Optional fields - we'll add them properly
+    fill_in_blanks = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(default=timezone.now, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.skill.name} - {self.user.username}"
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     resume = models.FileField(upload_to='resumes/', unique=False)  # Allows duplicates
