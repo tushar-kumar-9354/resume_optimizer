@@ -138,8 +138,10 @@ def upload_resume(request):
                 uploaded_file = request.FILES['resume']
                 uploaded_file.seek(0)
                 resume_text = extract_resume_text(uploaded_file)
-                user_profile.resume_text = resume_text[:50000]
-                user_profile.save()
+                
+                # Save resume text to the profile
+                user_profile.resume_text = resume_text[:50000] if resume_text else ""
+                user_profile.save()  # Save here first
                 
                 # Log activity
                 Activity.objects.create(
@@ -152,9 +154,13 @@ def upload_resume(request):
                 # Analyze with Gemini (Use Key 1)
                 api_key = GEMINI_API_KEY_1
                 ats_score, top_skills = get_ats_score_from_gemini(resume_text, api_key)
+                
+                # Update profile with analysis results
                 user_profile.ats_score = ats_score
                 user_profile.top_skills = ', '.join(top_skills[:5])
-                user_profile.save()
+                user_profile.save()  # Save again with analysis results
+                
+                # ... rest of your code ...
                 
                 Activity.objects.create(
                     user=request.user,
@@ -341,6 +347,7 @@ def generate_project_ideas_view(request):
 
 # In core/views.py, update the week_code_view function:
 
+
 @login_required
 def week_code_view(request):
     code_output = ""
@@ -366,19 +373,45 @@ def week_code_view(request):
                     GEMINI_API_KEY_2
                 )
                 
-                # Save to database
+                # Save to database - ADD WEEK NUMBER
                 if code_output:
-                    ProjectStep.objects.create(
+                    # Try to extract week from step description or use default
+                    week = 1  # Default week
+                    
+                    # Try to parse week from step description
+                    week_match = re.search(r'week\s*(\d+)', step_description, re.IGNORECASE)
+                    if week_match:
+                        week = int(week_match.group(1))
+                    
+                    # Check if this step already exists (update instead of create)
+                    existing_step = ProjectStep.objects.filter(
                         user=request.user,
                         project_title=project_title,
-                        step_description=step_description,
-                        code_output=code_output[:10000],
-                        status='PENDING'
-                    )
-                    print(f"✅ Saved code for: {step_description}")
+                        step_description__icontains=step_description[:50]
+                    ).first()
+                    
+                    if existing_step:
+                        # Update existing step
+                        existing_step.code_output = code_output[:10000]
+                        existing_step.status = 'PENDING'
+                        existing_step.save()
+                        print(f"✅ Updated code for existing step: {step_description}")
+                    else:
+                        # Create new step with week number
+                        ProjectStep.objects.create(
+                            user=request.user,
+                            project_title=project_title,
+                            step_description=step_description,
+                            week=week,  # ADD THIS
+                            code_output=code_output[:10000],
+                            status='PENDING'
+                        )
+                        print(f"✅ Saved code for week {week}: {step_description}")
                 
             except Exception as e:
                 print(f"❌ Code generation error: {e}")
+                import traceback
+                traceback.print_exc()
                 code_output = f"# Error generating code: {str(e)[:200]}\n\nPlease try again or use simpler instructions."
         
         # Ask Gemini
@@ -414,6 +447,8 @@ Answer briefly in 2-3 sentences:
         "ai_response": ai_response,
     })
 
+
+
 # Project Management Views
 @login_required
 def project_timeline_view(request):
@@ -438,82 +473,87 @@ def project_dashboard_view(request):
 @login_required
 def dashboard_data(request):
     try:
-        # 1. Get user profile
         profile = UserProfile.objects.filter(user=request.user).first()
         
-        # 2. Active projects (projects with any PENDING or IN_PROGRESS steps)
-        active_projects_count = ProjectStep.objects.filter(
-            user=request.user,
-            status__in=['PENDING', 'IN_PROGRESS']
-        ).values('project_title').distinct().count()
+        # Get active projects count (safer way)
+        active_projects = 0
+        try:
+            active_projects = ProjectStep.objects.filter(
+                user=request.user,
+                status__in=['PENDING', 'IN_PROGRESS']
+            ).values('project_title').distinct().count()
+        except:
+            pass
         
-        # 3. Completed challenges
-        completed_challenges_count = Challenge.objects.filter(
-            user=request.user,
-            status='PASSED'
-        ).count()
+        # Get completed challenges
+        completed_challenges = 0
+        try:
+            completed_challenges = Challenge.objects.filter(
+                user=request.user,
+                status='PASSED'
+            ).count()
+        except:
+            pass
         
-        # 4. ATS Score
-        ats_score = profile.ats_score if profile and profile.ats_score else 0
+        # Calculate ATS score safely
+        ats_score = 0
+        if profile and hasattr(profile, 'ats_score'):
+            ats_score = profile.ats_score if profile.ats_score is not None else 0
         
-        # 5. Skills with levels (from resume analysis)
+        # Process skills safely
         skills_data = []
-        if profile and profile.top_skills:
-            skill_names = [s.strip() for s in profile.top_skills.split(',')[:5] if s.strip()]
-            
-            for skill_name in skill_names:
-                # Count how many project steps mention this skill
-                steps_count = ProjectStep.objects.filter(
-                    user=request.user,
-                    step_description__icontains=skill_name.lower()
-                ).count()
-                
-                # Determine level based on project count
-                if steps_count >= 3:
-                    level = 'Advanced'
-                elif steps_count >= 1:
-                    level = 'Intermediate'
-                else:
-                    level = 'Beginner'
-                
+        if profile and hasattr(profile, 'top_skills') and profile.top_skills:
+            try:
+                skill_names = [s.strip() for s in profile.top_skills.split(',')[:5] if s.strip()]
+                for skill_name in skill_names:
+                    steps_count = ProjectStep.objects.filter(
+                        user=request.user,
+                        step_description__icontains=skill_name.lower()
+                    ).count()
+                    
+                    # Determine level
+                    if steps_count >= 3:
+                        level = 'Advanced'
+                    elif steps_count >= 1:
+                        level = 'Intermediate'
+                    else:
+                        level = 'Beginner'
+                    
+                    skills_data.append({
+                        'name': skill_name,
+                        'level': level,
+                        'project_count': steps_count
+                    })
+            except Exception as skill_error:
+                print(f"Skill processing error: {skill_error}")
+                # Add a default skill if processing fails
                 skills_data.append({
-                    'name': skill_name,
-                    'level': level,
-                    'project_count': steps_count
+                    'name': 'Python',
+                    'level': 'Beginner',
+                    'project_count': 0
                 })
-        else:
-            # If no skills from resume, show placeholder
-            skills_data = [{
-                'name': 'Upload resume to analyze skills',
-                'level': 'Beginner',
-                'project_count': 0
-            }]
-        
-        # 6. Calculate skills improved (challenges completed)
-        skills_improved = Challenge.objects.filter(
-            user=request.user,
-            status='PASSED'
-        ).count()
         
         return JsonResponse({
-            'active_projects': active_projects_count,
-            'completed_challenges': completed_challenges_count,
-            'skills_improved': skills_improved,
+            'success': True,
+            'active_projects': active_projects,
+            'completed_challenges': completed_challenges,
+            'skills_improved': completed_challenges,
             'ats_score': ats_score,
             'skills': skills_data,
+            'has_profile': profile is not None,
+            'has_resume': profile.resume_text is not None if profile and hasattr(profile, 'resume_text') else False,
+            'has_ats_score': profile.ats_score is not None if profile else False
         })
         
     except Exception as e:
         print(f"❌ Dashboard data error: {e}")
+        import traceback
+        traceback.print_exc()
         return JsonResponse({
-            'active_projects': 0,
-            'completed_challenges': 0,
-            'skills_improved': 0,
-            'ats_score': 0,
-            'skills': [],
-            'error': str(e)[:100]
+            'success': False,
+            'error': str(e)[:200]
         })
-# Step Management
+
 @login_required
 def regenerate_step_code(request, step_id):
     step = get_object_or_404(ProjectStep, id=step_id, user=request.user)
@@ -552,8 +592,21 @@ def mark_step_pending(request, step_id):
 
 # Home and Activities
 def index(request):
+    if request.user.is_authenticated:
+        # Get user profile and other data for initial load
+        profile = UserProfile.objects.filter(user=request.user).first()
+        
+        # Get initial data for the template
+        from .models import ProjectStep, Challenge
+        
+        context = {
+            'profile': profile,
+            'has_profile': profile is not None,
+            'ats_score': profile.ats_score if profile else 0,
+            'top_skills': profile.top_skills if profile else '',
+        }
+        return render(request, 'core/index.html', context)
     return render(request, 'core/index.html')
-
 @login_required
 def user_activities(request):
     activities = Activity.objects.filter(

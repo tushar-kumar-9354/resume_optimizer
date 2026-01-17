@@ -44,14 +44,18 @@ class Challenge(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    resume = models.FileField(upload_to='resumes/', unique=False)  # Allows duplicates
-    skills = models.ManyToManyField(Skill)
-    ats_score = models.IntegerField(null=True, blank=True)  # New
-    top_skills = models.CharField(max_length=500, null=True, blank=True)  # New
-
+    resume = models.FileField(upload_to='resumes/', unique=False)
+    resume_text = models.TextField(blank=True, null=True)  # ADD THIS FIELD
+    skills = models.ManyToManyField(Skill, blank=True)  # Make optional
+    ats_score = models.IntegerField(null=True, blank=True)
+    top_skills = models.CharField(max_length=500, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)  # Optional: track creation
+    updated_at = models.DateTimeField(auto_now=True)  # Optional: track updates
     
     def __str__(self):
         return self.user.username
+    
+    
 from django.db import models
 from django.contrib.auth.models import User
 # core/models.py

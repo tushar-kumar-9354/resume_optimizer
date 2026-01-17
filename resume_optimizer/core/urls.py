@@ -23,6 +23,8 @@ urlpatterns = [
     path('step/<int:step_id>/mark-done/', views.mark_step_done, name='mark_step_done'),
     path('regenerate/<int:step_id>/', views.regenerate_step_code, name='regenerate_step'),
     path('step/<int:step_id>/mark-pending/', views.mark_step_pending, name='mark_step_pending'),
+    path('dashboard-data/', views.dashboard_data, name='dashboard_data'),
+    path('user-activities/', views.user_activities, name='user_activities'),
     
     # API Endpoints
     path('api/user/activities/', views.user_activities, name='user_activities'),
@@ -34,10 +36,12 @@ urlpatterns = [
     path('test-api-2/', views.test_api_key_2, name='test_api_2'),
     path('token-dashboard/', views.token_usage_dashboard, name='token_dashboard'),
     path('reset-tokens/', views.reset_token_counts, name='reset_tokens'),
+
     
     # Logout
     path('logout/', LogoutView.as_view(next_page='index'), name='logout'),
     path('debug-challenges/', views.debug_challenges, name='debug_challenges'),
     path('test-dashboard/', views.test_dashboard_data, name='test_dashboard'),
+    
     path('debug-dashboard-json/', views.debug_dashboard_json, name='debug_dashboard_json'),
 ]

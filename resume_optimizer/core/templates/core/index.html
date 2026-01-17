@@ -573,36 +573,225 @@
     <h4 class="text-white mb-2">Debug Info</h4>
     <pre id="debug-data" class="text-xs text-gray-300"></pre>
 </div>
+<!-- In your core/index.html template -->
+<div id="dashboard-data" class="dashboard-container">
+    <!-- This will be populated by JavaScript -->
+    <div class="loading">Loading your data...</div>
+</div>
 
+
+
+<!-- Add this script just before the closing </body> tag -->
 <script>
-    // Add this to your JavaScript to show debug info
-    function showDebugInfo(data) {
-        const debugDiv = document.getElementById('debug-info');
-        const debugPre = document.getElementById('debug-data');
-        if (debugDiv && debugPre) {
-            debugDiv.classList.remove('hidden');
-            debugPre.textContent = JSON.stringify(data, null, 2);
-        }
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Loading dashboard data...');
+    
+    // Fetch dashboard data
+    fetch('/dashboard-data/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Dashboard data received:', data);
+            
+            // Update ATS Score
+            const atsElement = document.getElementById('ats-score');
+            if (atsElement) {
+                atsElement.textContent = data.ats_score || 0;
+            }
+            
+            // Update active projects count
+            const activeProjectsElement = document.getElementById('active-projects-count');
+            if (activeProjectsElement) {
+                activeProjectsElement.textContent = data.active_projects || 0;
+            }
+            
+            // Update completed challenges count
+            const completedChallengesElement = document.getElementById('completed-challenges-count');
+            if (completedChallengesElement) {
+                completedChallengesElement.textContent = data.completed_challenges || 0;
+            }
+            
+            // Update skills improved count
+            const skillsImprovedElement = document.getElementById('skills-improved-count');
+            if (skillsImprovedElement) {
+                skillsImprovedElement.textContent = data.skills_improved || 0;
+            }
+            
+            // Update top skills section
+            const topSkillsContainer = document.getElementById('top-skills');
+            if (topSkillsContainer && data.skills && data.skills.length > 0) {
+                topSkillsContainer.innerHTML = data.skills.map(skill => `
+                    <div class="mb-3">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-white font-medium">${skill.name}</span>
+                            <span class="text-xs px-2 py-1 rounded-full ${
+                                skill.level === 'Beginner' ? 'bg-blue-500/20 text-blue-400' :
+                                skill.level === 'Intermediate' ? 'bg-yellow-500/20 text-yellow-400' :
+                                'bg-green-500/20 text-green-400'
+                            }">
+                                ${skill.level}
+                            </span>
+                        </div>
+                        <div class="text-xs text-gray-400">
+                            Used in ${skill.project_count || 0} projects
+                        </div>
+                    </div>
+                `).join('');
+            } else if (topSkillsContainer) {
+                topSkillsContainer.innerHTML = `
+                    <div class="text-center py-4 text-gray-400">
+                        <svg class="w-8 h-8 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p>Upload your resume to see your skills</p>
+                    </div>
+                `;
+            }
+            
+            // Update active projects list
+            const activeProjectsContainer = document.getElementById('active-projects');
+            if (activeProjectsContainer) {
+                // You need to fetch active projects separately or include them in dashboard-data
+                // For now, show a message
+                if (data.active_projects > 0) {
+                    activeProjectsContainer.innerHTML = `
+                        <div class="text-center py-4">
+                            <p class="text-white">${data.active_projects} active project(s)</p>
+                            <p class="text-sm text-gray-400 mt-1">Check the Projects page for details</p>
+                        </div>
+                    `;
+                } else {
+                    activeProjectsContainer.innerHTML = `
+                        <div class="text-center py-4 text-gray-400">
+                            <svg class="w-8 h-8 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p>No active projects yet</p>
+                            <p class="text-sm mt-1">Start a new project to begin!</p>
+                        </div>
+                    `;
+                }
+            }
+            
+        })
+        .catch(error => {
+            console.error('Error fetching dashboard data:', error);
+            // Show error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-center';
+            errorDiv.innerHTML = `
+                <p class="text-red-300">Failed to load dashboard data</p>
+                <p class="text-xs text-gray-400 mt-1">Please refresh the page</p>
+            `;
+            
+            // Add error message somewhere visible
+            const mainContent = document.querySelector('main .container');
+            if (mainContent) {
+                mainContent.insertBefore(errorDiv, mainContent.firstChild);
+            }
+        });
+    
+    // Load activities
+    loadActivities();
+});
+
+// Function to load activities
+function loadActivities() {
+    const activitiesContainer = document.getElementById('activities-container');
+    const loadingElement = document.getElementById('activities-loading');
+    
+    if (!activitiesContainer) return;
+    
+    // Show loading
+    if (loadingElement) {
+        loadingElement.style.display = 'flex';
     }
     
-    // Modify loadDashboardData to show debug info
-    function loadDashboardData() {
-        console.log('Loading dashboard data...');
-        
-        fetch('/dashboard-data/')
-            .then(response => response.json())
-            .then(data => {
-                console.log('Dashboard data:', data);
-                showDebugInfo(data); // Add this line
-                // ... rest of your code
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showDebugInfo({error: error.message});
-            });
-    }
-</script>
+    fetch('/user-activities/')
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+            
+            if (data.activities && data.activities.length > 0) {
+                activitiesContainer.innerHTML = data.activities.map(activity => `
+                    <div class="activity-item mb-3 pb-3 border-b border-gray-700/50 last:border-0">
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-full ${
+                                activity.type.includes('UPLOAD') ? 'bg-blue-500/20' :
+                                activity.type.includes('CHALLENGE') ? 'bg-green-500/20' :
+                                activity.type.includes('ANALYSIS') ? 'bg-purple-500/20' :
+                                'bg-gray-500/20'
+                            } flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 ${
+                                    activity.type.includes('UPLOAD') ? 'text-blue-400' :
+                                    activity.type.includes('CHALLENGE') ? 'text-green-400' :
+                                    activity.type.includes('ANALYSIS') ? 'text-purple-400' :
+                                    'text-gray-400'
+                                }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                        d="${
+                                            activity.type.includes('UPLOAD') ? 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' :
+                                            activity.type.includes('CHALLENGE') ? 'M5 13l4 4L19 7' :
+                                            activity.type.includes('ANALYSIS') ? 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' :
+                                            'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+                                        }">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-white truncate">${activity.title}</p>
+                                <p class="text-xs text-gray-400 mt-1">${activity.details}</p>
+                                <p class="text-xs text-gray-500 mt-1">${activity.time_ago}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                activitiesContainer.innerHTML = `
+                    <div class="text-center py-6 text-gray-400">
+                        <svg class="w-8 h-8 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p>No recent activity</p>
+                        <p class="text-xs mt-1">Start using the platform to see activity here</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading activities:', error);
+            // Hide loading
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+            
+            activitiesContainer.innerHTML = `
+                <div class="text-center py-6 text-red-400">
+                    <p>Failed to load activities</p>
+                    <p class="text-xs text-gray-400 mt-1">Please try again</p>
+                </div>
+            `;
+        });
+}
 
+// Function to refresh activities
+function refreshActivities() {
+    loadActivities();
+}
+
+// Auto-refresh dashboard every 30 seconds
+setInterval(() => {
+    console.log('Auto-refreshing dashboard...');
+    // You could reload specific data here if needed
+}, 30000);
+</script>
 
 </body>
 </html>
